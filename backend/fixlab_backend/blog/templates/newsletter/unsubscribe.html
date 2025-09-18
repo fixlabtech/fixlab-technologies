@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Newsletter Unsubscribe</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Newsletter Unsubscribe',
+            text: "{{ message|escapejs }}",
+            confirmButtonText: 'OK',
+            width: '400px',          // smaller width
+            padding: '1rem',         // less padding
+            allowOutsideClick: false, // optional: prevent closing by clicking outside
+        }).then(() => {
+            // Optional: redirect user to homepage or blog
+            window.location.href = "C:/Users/USER/Desktop/fixlab-technologies/frontend/main-site/index.html";
+        });
+    </script>
+</body>
+</html>

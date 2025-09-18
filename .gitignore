@@ -1,0 +1,26 @@
+# Ignore virtual environments
+venv/
+.env/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore migrations (optional)
+*/migrations/
+
+# Ignore big tools and VM images
+Tools_box/
+*.vmdk
+*.vmx
+*.vmxf
+*.iso
+*.ova
+*.zip
+*.rar
+
+# Ignore system files
+.DS_Store
+Thumbs.db

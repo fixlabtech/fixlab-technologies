@@ -1,0 +1,27 @@
+Main registration body
+.registration-body {
+    background: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Card styling */
+.card {
+    max-width: 600px;
+    width: 100%;
+    background-color: #ffffff;
+    color: #000;
+    padding: 60px 40px;
+    border-radius: 1rem; /* rounded-4 equivalent */
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); /* shadow-lg equivalent */
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: #000097;
+    color: #fff;
+}
+
