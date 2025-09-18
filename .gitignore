@@ -24,3 +24,7 @@ Tools_box/
 # Ignore system files
 .DS_Store
 Thumbs.db
+"*.zip" 
+"*.rar" 
+"*.mp4" 
+"*.exe" 
