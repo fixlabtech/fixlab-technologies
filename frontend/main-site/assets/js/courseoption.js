@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }).then((result) => {
         if (result.isConfirmed) {
           // New User selected
-          window.location.href = "new.html";
+          window.location.href = "register.html";
         } else if (result.isDenied) {
           // Already Registered selected
           window.location.href = "user.html";
