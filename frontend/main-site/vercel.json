@@ -1,12 +1,13 @@
 {
+  "rewrites": [
+    { "source": "/index", "destination": "/" },
+    { "source": "/index.html", "destination": "/" }
+  ],
   "redirects": [
     { "source": "/:path.html", "destination": "/:path", "permanent": true }
   ],
   "rewrites": [
     { "source": "/:path", "destination": "/:path.html" }
   ],
-  "rewrites": [
-    { "source": "/index", "destination": "/" },
-    { "source": "/index.html", "destination": "/" }
-  ]
+  
 }
