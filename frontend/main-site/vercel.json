@@ -4,5 +4,9 @@
   ],
   "rewrites": [
     { "source": "/:path", "destination": "/:path.html" }
+  ],
+  "rewrites": [
+    { "source": "/index", "destination": "/" },
+    { "source": "/index.html", "destination": "/" }
   ]
 }
