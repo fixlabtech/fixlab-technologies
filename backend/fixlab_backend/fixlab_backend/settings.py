@@ -83,18 +83,19 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'fixlab_backend.wsgi.application'
+WSGI_APPLICATION = "fixlab_backend.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database (Supabase Postgres)
+# -------------------------
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": dj_database_url.config(
+        default="postgresql://postgres:411495Dan.@db.cnugcedhpcqupjbwymqb.supabase.co:5432/postgres",
+        conn_max_age=600,
+        ssl_require=True,
+    )
 }
+
 
 
 # Password validation
@@ -138,11 +139,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email configuration using SendGrid
+# Email (SendGrid)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_HOST_USER = "apikey"  # literally the word 'apikey'
-EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")  
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD = os.environ.get("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")
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "noreply@fixlabtech.com"
