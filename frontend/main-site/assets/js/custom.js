@@ -85,9 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (result.isConfirmed) {
         // ✅ Redirect to Paystack depending on mode type
         if (mode === "onsite") {
-          window.location.href = "https://paystack.shop/pay/fixlab_full_enroll";  
+          window.location.href = "https://paystack.shop/pay/fixlab_onsite_enroll";  
         } else if (mode === "virtual") {
-          window.location.href = "https://paystack.shop/pay/fixlab_install_enroll";  
+          window.location.href = "https://paystack.shop/pay/fixlab_virtual_enroll";  
         }
       }
     });
