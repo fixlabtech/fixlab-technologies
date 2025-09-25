@@ -84,11 +84,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "fixlab_backend.wsgi.application"
 
+DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL")
+
+if not DATABASE_URL:
+    raise Exception("DATABASE_PUBLIC_URL environment variable not set!")
+
 DATABASES = {
     "default": dj_database_url.parse(
-        os.getenv("DATABASE_PUBLIC_URL"),
-        conn_max_age=600,  # keeps connections open efficiently
-        ssl_require=True   # Railway requires SSL
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True
     )
 }
 
