@@ -84,12 +84,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "fixlab_backend.wsgi.application"
 
-# Database (Supabase Postgres)
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
+    "default": dj_database_url.parse(
+        os.getenv("DATABASE_PUBLIC_URL"),
+        conn_max_age=600,  # keeps connections open efficiently
+        ssl_require=True   # Railway requires SSL
     )
 }
 
