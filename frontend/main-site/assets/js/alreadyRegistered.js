@@ -41,7 +41,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
 
     try {
         // ✅ Check backend for user info
-        const checkResponse = await fetch(`http://127.0.0.1:8000/api/check-user?email=${encodeURIComponent(email)}`);
+        const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
         const data = await checkResponse.json();
 
         if (!data.exists) {
