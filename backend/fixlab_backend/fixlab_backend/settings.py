@@ -23,11 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "fallback-secret-key")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
+PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
 
 
 # Allow Django to serve this host
 ALLOWED_HOSTS = [
-     '.nf.app',
      'fixlab-technologies.onrender.com',
     'services.fixlabtech.com',
     'www.services.fixlabtech.com',
@@ -80,8 +80,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Allow all origins for local development
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+        "https://fixlabtech.com",
+        "https://www.fixlabtech.com",
+        "https://services.fixlabtech.com",
+    ]
+
 
 ROOT_URLCONF = 'fixlab_backend.urls'
 
@@ -181,8 +185,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # For CSRF protection
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
-    "https://api.fixlabtech.com",
+    "https://fixlab-technologies.onrender.com",
+    "https://fixlabtech.com",
+    "https://www.fixlabtech.com",
     "https://services.fixlabtech.com",
     "https://www.services.fixlabtech.com",
 ]
