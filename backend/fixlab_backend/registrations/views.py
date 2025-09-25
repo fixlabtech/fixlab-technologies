@@ -61,19 +61,25 @@ class VerifyAndRegisterAPIView(APIView):
         # Step 1: Verify with Paystack
         headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
         url = f"https://api.paystack.co/transaction/verify/{reference}"
-        r = requests.get(url, headers=headers)
-        result = r.json()
 
-        if not result["status"] or result["data"]["status"] != "success":
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            result = r.json()
+        except Exception:
+            return Response(
+                {"success": False, "message": "Could not connect to Paystack."},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        if not result.get("status") or result["data"].get("status") != "success":
             return Response(
                 {"success": False, "message": "Payment could not be verified."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         # Step 2: Forward to RegistrationAPIView logic
-        reg_view = RegistrationAPIView()
-        return reg_view.post(request)
-
+        reg_view = RegistrationAPIView.as_view()
+        return reg_view(request._request)
 
 class RegistrationAPIView(APIView):
     """
