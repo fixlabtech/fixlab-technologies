@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // ✅ Check if email already exists
-      const checkResponse = await fetch(`http://127.0.0.1:8000/api/check-user?email=${encodeURIComponent(email)}`);
+      const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
       const checkResult = await checkResponse.json();
 
       if (checkResult.exists) {
