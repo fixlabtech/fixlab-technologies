@@ -25,7 +25,15 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "fallback-secret-key")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 
-ALLOWED_HOSTS = ["fixlab-technologies.onrender.com", "localhost"]
+# Allow Django to serve this host
+ALLOWED_HOSTS = [
+     'fixlab-technologies.onrender.com',
+    'services.fixlabtech.com',
+    'www.services.fixlabtech.com',
+    'localhost',
+    '127.0.0.1',
+]
+
 
 
 # Application definition
@@ -171,7 +179,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
+# For CSRF protection
 CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
-    "https://api.fixlabtech.com"
+    "https://api.fixlabtech.com",
+    "https://services.fixlabtech.com",
+    "https://www.services.fixlabtech.com",
 ]
