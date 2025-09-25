@@ -12,12 +12,13 @@ from django.conf import settings
 from rest_framework.decorators import 
 from rest_framework.response import Response
 import requests
-
+from django.core.cache import cache
 
 
 
 class HealthCheckView(View):
     def get(self, request, *args, **kwargs):
+        # Check database
         db_conn = connections['default']
         try:
             c = db_conn.cursor()
@@ -25,10 +26,22 @@ class HealthCheckView(View):
         except OperationalError:
             db_status = "error"
 
-        status_code = 200 if db_status == "ok" else 500
+        # Check cache (optional)
+        try:
+            cache.set('health_check', 'ok', timeout=5)
+            cache_status = "ok" if cache.get('health_check') == 'ok' else "error"
+        except Exception:
+            cache_status = "error"
+
+        overall_status = "ok" if db_status == "ok" and cache_status == "ok" else "error"
+        status_code = 200 if overall_status == "ok" else 500
 
         return JsonResponse(
-            {"status": "ok" if db_status == "ok" else "error", "database": db_status},
+            {
+                "status": overall_status,
+                "database": db_status,
+                "cache": cache_status
+            },
             status=status_code
         )
 
