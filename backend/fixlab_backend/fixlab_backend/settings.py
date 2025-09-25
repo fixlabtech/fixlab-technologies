@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ["fixlab-technologies.onrender.com", "localhost"]
 # Application definition
 
 INSTALLED_APPS = [
+     'suit',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +50,15 @@ INSTALLED_APPS = [
     'registrations',
      
 ]
+
+
+SUIT_CONFIG = {
+    'MENU': (
+        {'app': 'blog', 'label': 'Blog', 'permissions': 'blog.view_blog'},
+        {'app': 'contact', 'label': 'Contact', 'permissions': 'contact.view_contact'},
+        {'app': 'registration', 'label': 'Registration', 'permissions': 'registration.view_registration'},
+    )
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  
