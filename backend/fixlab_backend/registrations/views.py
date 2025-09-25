@@ -1,3 +1,7 @@
+from django.views import View
+from django.http import JsonResponse
+from django.db import connections
+from django.db.utils import OperationalError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -5,8 +9,28 @@ from .models import Registration, Course
 from .serializers import RegistrationSerializer
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework.decorators import 
+from rest_framework.response import Response
 import requests
 
+
+
+
+class HealthCheckView(View):
+    def get(self, request, *args, **kwargs):
+        db_conn = connections['default']
+        try:
+            c = db_conn.cursor()
+            db_status = "ok"
+        except OperationalError:
+            db_status = "error"
+
+        status_code = 200 if db_status == "ok" else 500
+
+        return JsonResponse(
+            {"status": "ok" if db_status == "ok" else "error", "database": db_status},
+            status=status_code
+        )
 
 
 class VerifyAndRegisterAPIView(APIView):
