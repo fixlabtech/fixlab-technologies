@@ -1,9 +1,9 @@
 // ✅ Paystack Links
 const paystackLinks = {
-    installment: "https://paystack.shop/pay/fixlab_install_enroll",
-    full: "https://paystack.shop/pay/fixlab_full_enroll",
-    newCourseFull: "https://paystack.shop/pay/fixlab_full_enroll",
-    newCourseInstallment: "https://paystack.shop/pay/fixlab_install_enroll"
+    installment: "https://paystack.shop/pay/fixlab_virtual_enroll",
+    full: "https://paystack.shop/pay/fixlab_onsite_enroll",
+    newCourseFull: "https://paystack.shop/pay/fixlab_onsite_enroll",
+    newCourseInstallment: "https://paystack.shop/pay/fixlab_virtual_enroll"
 };
 
 // ✅ Toggle new course fields
