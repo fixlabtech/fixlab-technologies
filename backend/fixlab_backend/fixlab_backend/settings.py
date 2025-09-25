@@ -27,6 +27,7 @@ DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 # Allow Django to serve this host
 ALLOWED_HOSTS = [
+     '.nf.app',
      'fixlab-technologies.onrender.com',
     'services.fixlabtech.com',
     'www.services.fixlabtech.com',
