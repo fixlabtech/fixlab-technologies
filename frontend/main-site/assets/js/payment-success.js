@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   registrationData.reference = reference;
 
   try {
-    const response = await fetch("https://services.fixlabtech.com/api/verify-register/", {
+    const response = await fetch("https://www.services.fixlabtech.com/api/verify-register/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(registrationData)
