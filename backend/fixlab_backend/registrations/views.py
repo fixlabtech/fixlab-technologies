@@ -9,10 +9,8 @@ from .models import Registration, Course
 from .serializers import RegistrationSerializer
 from django.core.mail import send_mail
 from django.conf import settings
-from rest_framework.response import Response
 import requests
 from django.core.cache import cache
-
 
 
 class HealthCheckView(View):
@@ -20,12 +18,12 @@ class HealthCheckView(View):
         # Check database
         db_conn = connections['default']
         try:
-            c = db_conn.cursor()
+            db_conn.cursor()
             db_status = "ok"
         except OperationalError:
             db_status = "error"
 
-        # Check cache (optional)
+        # Check cache
         try:
             cache.set('health_check', 'ok', timeout=5)
             cache_status = "ok" if cache.get('health_check') == 'ok' else "error"
@@ -36,11 +34,7 @@ class HealthCheckView(View):
         status_code = 200 if overall_status == "ok" else 500
 
         return JsonResponse(
-            {
-                "status": overall_status,
-                "database": db_status,
-                "cache": cache_status
-            },
+            {"status": overall_status, "database": db_status, "cache": cache_status},
             status=status_code
         )
 
@@ -49,7 +43,6 @@ class VerifyAndRegisterAPIView(APIView):
     """
     Verify Paystack payment before registering student
     """
-
     def post(self, request):
         reference = request.data.get("reference")
         if not reference:
@@ -70,9 +63,6 @@ class VerifyAndRegisterAPIView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY
             )
 
-        # Log Paystack response for debugging
-        print("PAYSTACK RESPONSE:", result)
-
         if not result.get("status"):
             return Response(
                 {"success": False, "message": result.get("message", "Verification failed.")},
@@ -90,6 +80,7 @@ class VerifyAndRegisterAPIView(APIView):
         reg_view = RegistrationAPIView.as_view()
         return reg_view(request._request)
 
+
 class RegistrationAPIView(APIView):
     """
     Handles:
@@ -103,10 +94,11 @@ class RegistrationAPIView(APIView):
         action = data.get('action')
         email = data.get('email')
         course_name = data.get('course')
+        reference = data.get('reference')
 
-        if not action or not email:
+        if not action or not email or not reference:
             return Response(
-                {"success": False, "message": "Email and action are required."},
+                {"success": False, "message": "Email, action, and reference are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -134,12 +126,13 @@ class RegistrationAPIView(APIView):
                 "mode_of_learning": data.get('mode_of_learning'),
                 "payment_option": payment_option,
                 "payment_status": payment_status,
+                "reference": reference,
                 "message": data.get('message', '')
             })
             if serializer.is_valid():
                 reg = serializer.save()
 
-                # Notify support team
+                # Notify support
                 support_subject = f"🎓 New Student Registration: {reg.full_name}"
                 support_message = f"""
 A new student has registered:
@@ -151,18 +144,13 @@ Course: {reg.course.name}
 Mode of learning: {reg.mode_of_learning}
 Payment option: {reg.payment_option}
 Payment status: {reg.payment_status}
+Reference: {reg.reference}
 Message: {reg.message}
-
-Please create their Moodle account and send login details within 24 hours.
 """
-                send_mail(
-                    support_subject,
-                    support_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    ["support@fixlabtech.freshdesk.com"]
-                )
+                send_mail(support_subject, support_message, settings.DEFAULT_FROM_EMAIL,
+                          ["support@fixlabtech.freshdesk.com"])
 
-                # Email student
+                # Notify student
                 student_subject = f"Welcome to Fixlab Academy - {course_obj.name}"
                 student_message = f"""
 Hello {reg.full_name},
@@ -171,11 +159,10 @@ We are delighted to confirm your registration for **{course_obj.name}** ({reg.mo
 
 📌 Payment option: {reg.payment_option.capitalize()}
 📌 Payment status: {reg.payment_status.capitalize()}
+📌 Payment reference: {reg.reference}
 
 Our support team is creating your LMS account.  
 ➡️ You will receive your login details via email within 24 hours.
-
-Welcome aboard, and best wishes for your learning journey!
 
 Best regards,  
 Fixlab Academy
@@ -188,9 +175,9 @@ Fixlab Academy
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ---- INSTALLMENT PAYMENT ----
+        # ---- INSTALLMENT ----
         elif action == "installment":
-            reg = Registration.objects.filter(email=email).first()
+            reg = Registration.objects.filter(email=email, reference=reference).first()
             if not reg:
                 return Response(
                     {"success": False, "message": "Registration not found."},
@@ -200,7 +187,7 @@ Fixlab Academy
             reg.payment_status = "completed"
             reg.save()
 
-            # Notify support team
+            # Notify support
             support_subject = f"💰 Installment Completed: {reg.full_name}"
             support_message = f"""
 Student has completed installment payment:
@@ -208,28 +195,24 @@ Student has completed installment payment:
 Name: {reg.full_name}
 Email: {reg.email}
 Course: {reg.course.name}
+Reference: {reg.reference}
 
 Payment status is now: Completed.
-
-Please confirm their Moodle account access.
 """
-            send_mail(
-                support_subject,
-                support_message,
-                settings.DEFAULT_FROM_EMAIL,
-                ["support@fixlabtech.freshdesk.com"]
-            )
+            send_mail(support_subject, support_message, settings.DEFAULT_FROM_EMAIL,
+                      ["support@fixlabtech.freshdesk.com"])
 
-            # Email student
+            # Notify student
             student_subject = f"Payment Confirmation - {reg.course.name}"
             student_message = f"""
 Hello {reg.full_name},
 
-We are pleased to confirm that your installment payment for **{reg.course.name}** has been successfully completed.
+We are pleased to confirm that your installment payment for **{reg.course.name}** has been completed.
 
 📌 Payment status: Completed
+📌 Payment reference: {reg.reference}
 
-Your LMS access remains active. Thank you for your commitment.
+Thank you for your commitment.
 
 Best regards,  
 Fixlab Academy
@@ -257,10 +240,11 @@ Fixlab Academy
             existing_reg.mode_of_learning = data.get('mode_of_learning', existing_reg.mode_of_learning)
             existing_reg.payment_option = payment_option
             existing_reg.payment_status = payment_status
+            existing_reg.reference = data.reference
             existing_reg.message = data.get('message', existing_reg.message)
             existing_reg.save()
 
-            # Notify support team
+            # Notify support
             support_subject = f"📚 New Course Enrollment: {existing_reg.full_name}"
             support_message = f"""
 An existing student has registered for a new course:
@@ -271,17 +255,12 @@ New Course: {course_obj.name}
 Mode of learning: {existing_reg.mode_of_learning}
 Payment option: {existing_reg.payment_option}
 Payment status: {existing_reg.payment_status}
-
-Please update their Moodle account within 24 hours.
+Reference: {existing_reg.reference}
 """
-            send_mail(
-                support_subject,
-                support_message,
-                settings.DEFAULT_FROM_EMAIL,
-                ["support@fixlabtech.freshdesk.com"]
-            )
+            send_mail(support_subject, support_message, settings.DEFAULT_FROM_EMAIL,
+                      ["support@fixlabtech.freshdesk.com"])
 
-            # Email student
+            # Notify student
             student_subject = f"Enrollment Update - {course_obj.name}"
             student_message = f"""
 Hello {existing_reg.full_name},
@@ -291,9 +270,7 @@ Your enrollment has been successfully updated with a new course:
 
 📌 Payment option: {existing_reg.payment_option.capitalize()}
 📌 Payment status: {existing_reg.payment_status.capitalize()}
-
-Our support team will update your LMS account within 24 hours.  
-➡️ No new login details are required.
+📌 Payment reference: {existing_reg.reference}
 
 Thank you for continuing your learning journey with us.
 
@@ -311,13 +288,7 @@ Fixlab Academy
             )
 
 
-
 class CheckUserAPIView(APIView):
-    """
-    GET /api/check-user?email=<email>
-    - Returns whether a student exists and details
-    """
-
     def get(self, request):
         email = request.query_params.get("email")
         if not email:
@@ -338,4 +309,5 @@ class CheckUserAPIView(APIView):
             "mode_of_learning": reg.mode_of_learning,
             "payment_option": reg.payment_option,
             "payment_status": reg.payment_status,
+            "reference": reg.reference
         })
