@@ -21,6 +21,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'mode_of_learning',
             'payment_option',
             'payment_status',
+            'reference',
             'message',
             'created_at'
         ]
