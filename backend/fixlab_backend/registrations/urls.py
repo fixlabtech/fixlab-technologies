@@ -5,7 +5,7 @@ from .views import RegistrationAPIView, CheckUserAPIView,VerifyAndRegisterAPIVie
 urlpatterns = [
     path('registrations/', RegistrationAPIView.as_view(), name='registrations-api'),
     path("check-user", CheckUserAPIView.as_view(), name="check-user"),
-    path("api/verify-register/", VerifyAndRegisterAPIView.as_view(), name="verify-register"),
+    path("verify-register/", VerifyAndRegisterAPIView.as_view(), name="verify-register"),
     path('health/', HealthCheckView.as_view(), name='health-check'),
 
     
