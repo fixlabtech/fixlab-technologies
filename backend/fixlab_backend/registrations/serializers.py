@@ -1,14 +1,8 @@
-from rest_framework import serializers
-from .models import Registration, Course
-
-class CourseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Course
-        fields = ['id', 'name', 'code']
-
-
 class RegistrationSerializer(serializers.ModelSerializer):
-    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    course = serializers.SlugRelatedField(
+        queryset=Course.objects.all(),
+        slug_field="name"   # allows passing course name instead of id
+    )
 
     class Meta:
         model = Registration
@@ -26,4 +20,3 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['id', 'created_at']
-
