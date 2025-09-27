@@ -7,10 +7,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Registration, Course
 from .serializers import RegistrationSerializer
-from django.core.mail import send_mail
 from django.conf import settings
 import requests
 from django.core.cache import cache
+
+# ✅ Import SendGrid helper
+from .utils import send_email_via_sendgrid
 
 
 class HealthCheckView(View):
@@ -79,6 +81,10 @@ class RegistrationAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        paystack_data = result["data"]
+        amount_paid = paystack_data.get("amount", 0) / 100  # Paystack returns amount in kobo
+        metadata = paystack_data.get("metadata", {})
+
         # ----- GET COURSE OBJECT IF NEEDED -----
         course_obj = None
         if course_name:
@@ -91,7 +97,16 @@ class RegistrationAPIView(APIView):
                 )
 
         payment_option = data.get("payment_option", "installment")
-        payment_status = "completed" if payment_option == "full" else "partial"
+
+        # ✅ Payment status logic:
+        # if payment_option == "full", set to completed
+        # if payment_option == "installment" but amount >= expected_full_amount, set to completed
+        # otherwise partial
+        expected_amount = float(metadata.get("course_price", amount_paid))  # fallback to paid amount if no metadata
+        if payment_option == "full" or amount_paid >= expected_amount:
+            payment_status = "completed"
+        else:
+            payment_status = "partial"
 
         # ---- NEW REGISTRATION ----
         if action == "newRegistration":
@@ -118,11 +133,11 @@ class RegistrationAPIView(APIView):
             if not reg:
                 return Response({"success": False, "message": "No registration found for this email."},
                                 status=status.HTTP_404_NOT_FOUND)
-            reg.payment_status = "completed"
+            reg.payment_status = payment_status
             reg.reference = reference
             reg.save()
             self._send_notifications(reg, reg.course, action="installment")
-            return Response({"success": True, "message": "Installment completed"})
+            return Response({"success": True, "message": "Installment updated"})
 
         # ---- NEW COURSE ----
         elif action == "newCourse":
@@ -150,104 +165,97 @@ class RegistrationAPIView(APIView):
 
     def _send_notifications(self, reg, course_obj=None, action=None):
         """
-        Sends emails to support and student for all actions
+        Sends emails to support and student for all actions using SendGrid
         """
         if action == "newRegistration":
             # Support
             support_subject = f"🎓 New Student Registration: {reg.full_name}"
             support_message = f"""
-A new student has registered successfully.
+A new student has registered successfully.<br><br>
 
-Name: {reg.full_name}
-Email: {reg.email}
-Phone: {reg.phone}
-Course: {reg.course.name if reg.course else "N/A"}
-Mode of learning: {reg.mode_of_learning}
-Payment option: {reg.payment_option}
-Payment status: {reg.payment_status}
-Reference: {reg.reference}
-Message: {reg.message}
+Name: {reg.full_name}<br>
+Email: {reg.email}<br>
+Phone: {reg.phone}<br>
+Course: {reg.course.name if reg.course else "N/A"}<br>
+Mode of learning: {reg.mode_of_learning}<br>
+Payment option: {reg.payment_option}<br>
+Payment status: {reg.payment_status}<br>
+Reference: {reg.reference}<br>
+Message: {reg.message}<br>
 """
             # Student
             student_subject = f"Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
             student_message = f"""
-Hello {reg.full_name},
+Hello {reg.full_name},<br><br>
 
-We are delighted to confirm your registration for **{course_obj.name if course_obj else ''}** ({reg.mode_of_learning}).
+We are delighted to confirm your registration for <b>{course_obj.name if course_obj else ''}</b> ({reg.mode_of_learning}).<br><br>
 
-📌 Payment option: {reg.payment_option.capitalize()}
-📌 Payment status: {reg.payment_status.capitalize()}
-📌 Payment reference: {reg.reference}
+📌 Payment option: {reg.payment_option.capitalize()}<br>
+📌 Payment status: {reg.payment_status.capitalize()}<br>
+📌 Payment reference: {reg.reference}<br><br>
 
-Our support team is creating your LMS account.  
-➡️ You will receive your login details via email within 24 hours.
+Our support team is creating your LMS account.<br>
+➡️ You will receive your login details via email within 24 hours.<br><br>
 
-Best regards,  
+Best regards,<br>
 Fixlab Academy
 """
         elif action == "installment":
-            # Support
-            support_subject = f"💰 Installment Completed: {reg.full_name}"
+            support_subject = f"💰 Installment Updated: {reg.full_name}"
             support_message = f"""
-Student has completed installment payment.
+Student installment status has been updated.<br><br>
 
-Name: {reg.full_name}
-Email: {reg.email}
-Course: {reg.course.name if reg.course else "N/A"}
-Reference: {reg.reference}
-
-Payment status updated to: Completed
+Name: {reg.full_name}<br>
+Email: {reg.email}<br>
+Course: {reg.course.name if reg.course else "N/A"}<br>
+Reference: {reg.reference}<br>
+Payment status: {reg.payment_status.capitalize()}<br>
 """
-            # Student
-            student_subject = f"Payment Confirmation - {reg.course.name if reg.course else ''}"
+            student_subject = f"Payment Update - {reg.course.name if reg.course else ''}"
             student_message = f"""
-Hello {reg.full_name},
+Hello {reg.full_name},<br><br>
 
-We are pleased to confirm that your installment payment for **{reg.course.name if reg.course else ''}** has been completed.
+Your installment payment for <b>{reg.course.name if reg.course else ''}</b> has been updated.<br><br>
 
-📌 Payment status: Completed
-📌 Payment reference: {reg.reference}
+📌 Payment status: {reg.payment_status.capitalize()}<br>
+📌 Payment reference: {reg.reference}<br><br>
 
-Thank you for your commitment.
-
-Best regards,  
+Thank you for your commitment.<br><br>
+Best regards,<br>
 Fixlab Academy
 """
         elif action == "newCourse":
-            # Support
             support_subject = f"📚 New Course Enrollment: {reg.full_name}"
             support_message = f"""
-An existing student has enrolled in a new course.
+An existing student has enrolled in a new course.<br><br>
 
-Name: {reg.full_name}
-Email: {reg.email}
-New Course: {reg.course.name if reg.course else "N/A"}
-Mode of learning: {reg.mode_of_learning}
-Payment option: {reg.payment_option}
-Payment status: {reg.payment_status}
-Reference: {reg.reference}
+Name: {reg.full_name}<br>
+Email: {reg.email}<br>
+New Course: {reg.course.name if reg.course else "N/A"}<br>
+Mode of learning: {reg.mode_of_learning}<br>
+Payment option: {reg.payment_option}<br>
+Payment status: {reg.payment_status}<br>
+Reference: {reg.reference}<br>
 """
-            # Student
             student_subject = f"Enrollment Update - {reg.course.name if reg.course else ''}"
             student_message = f"""
-Hello {reg.full_name},
+Hello {reg.full_name},<br><br>
 
-Your enrollment has been successfully updated with a new course:  
-**{reg.course.name if reg.course else ''}** ({reg.mode_of_learning})
+Your enrollment has been successfully updated with a new course:<br>
+<b>{reg.course.name if reg.course else ''}</b> ({reg.mode_of_learning})<br><br>
 
-📌 Payment option: {reg.payment_option.capitalize()}
-📌 Payment status: {reg.payment_status.capitalize()}
-📌 Payment reference: {reg.reference}
+📌 Payment option: {reg.payment_option.capitalize()}<br>
+📌 Payment status: {reg.payment_status.capitalize()}<br>
+📌 Payment reference: {reg.reference}<br><br>
 
-Thank you for continuing your learning journey with us.
-
-Best regards,  
+Thank you for continuing your learning journey with us.<br><br>
+Best regards,<br>
 Fixlab Academy
 """
-        # Send emails
-        send_mail(support_subject, support_message, settings.DEFAULT_FROM_EMAIL,
-                  ["support@fixlabtech.freshdesk.com"])
-        send_mail(student_subject, student_message, settings.DEFAULT_FROM_EMAIL, [reg.email])
+
+        # ✅ Send via SendGrid
+        send_email_via_sendgrid(support_subject, support_message, "support@fixlabtech.com")
+        send_email_via_sendgrid(student_subject, student_message, reg.email)
 
 
 class CheckUserAPIView(APIView):
