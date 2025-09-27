@@ -25,7 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // ✅ Check if email already exists
-      const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
+      const checkResponse = await fetch(
+        `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
+      );
       const checkResult = await checkResponse.json();
 
       if (checkResult.exists) {
@@ -51,18 +53,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Registration data (action automatically newRegistration ✅)
-    const data = { 
-      full_name: name, 
-      email, 
-      phone, 
-      course, 
-      mode_of_learning: mode, 
+    // ✅ Match backend field names
+    const data = {
+      full_name: name,
+      email: email,
+      phone: phone,
+      course: course,
+      mode_of_learning: mode,
       payment_option: payment,
       action: "newRegistration"
     };
 
-    // ✅ Save in localStorage for success.js
+    // Save for success.js
     localStorage.setItem("registrationData", JSON.stringify(data));
 
     // Confirmation prompt
@@ -83,11 +85,11 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmButtonColor: "#1d4ed8"
     }).then((result) => {
       if (result.isConfirmed) {
-        // ✅ Redirect to Paystack depending on mode type
+        // Redirect to Paystack depending on mode
         if (mode === "onsite") {
-          window.location.href = "https://paystack.shop/pay/fixlab_onsite_enroll";  
+          window.location.href = "https://paystack.shop/pay/fixlab_onsite_enroll";
         } else if (mode === "virtual") {
-          window.location.href = "https://paystack.shop/pay/fixlab_virtual_enroll";  
+          window.location.href = "https://paystack.shop/pay/fixlab_virtual_enroll";
         }
       }
     });
