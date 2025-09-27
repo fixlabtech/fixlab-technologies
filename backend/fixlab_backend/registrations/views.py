@@ -189,7 +189,7 @@ Regards,<br>
 """
 
             # Student
-            student_subject = f"✅ Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
+            student_subject = f"Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
             student_message = f"""
 Hello {reg.full_name},<br><br>
 
@@ -209,8 +209,8 @@ Your registration for <b>{course_obj.name if course_obj else ''}</b> ({reg.mode_
 We are committed to providing world-class, practical training to help you achieve your career goals.<br><br>
 
 Warm regards,<br>
-<b>Fixlab Academy Team</b><br>
-<i>Transforming Learners into Professionals</i>
+<b>Fixlab Team</b><br>
+<i>Create, Innovate and Train</i>
 """
 
         elif action == "installment":
@@ -243,7 +243,8 @@ Your installment payment for <b>{reg.course.name if reg.course else ''}</b> has 
 Thank you for your continued trust and commitment.<br><br>
 
 Best regards,<br>
-<b>Fixlab Academy Team</b>
+<b>Fixlab Team</b><br>
+<i>Create, Innovate and Train</i>
 """
 
         elif action == "newCourse":
@@ -280,8 +281,8 @@ We’re excited to let you know your enrollment has been updated with a new cour
 Our team will update your LMS account within 24 hours so you can start accessing your new course materials.<br><br>
 
 Best regards,<br>
-<b>Fixlab Academy Team</b><br>
-<i>Transforming Learners into Professionals</i>
+<b>Fixlab Team</b><br>
+<i>Create, Innovate and Train</i>
 """
 
         # ✅ Send via SendGrid
