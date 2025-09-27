@@ -85,7 +85,7 @@ class RegistrationAPIView(APIView):
         amount_paid = paystack_data.get("amount", 0) / 100  # Paystack returns amount in kobo
         metadata = paystack_data.get("metadata", {})
 
-        # ----- GET COURSE OBJECT IF NEEDED -----
+        # ----- GET COURSE OBJECT -----
         course_obj = None
         if course_name:
             try:
@@ -98,11 +98,8 @@ class RegistrationAPIView(APIView):
 
         payment_option = data.get("payment_option", "installment")
 
-        # ✅ Payment status logic:
-        # if payment_option == "full", set to completed
-        # if payment_option == "installment" but amount >= expected_full_amount, set to completed
-        # otherwise partial
-        expected_amount = float(metadata.get("course_price", amount_paid))  # fallback to paid amount if no metadata
+        # ✅ Payment status logic
+        expected_amount = float(metadata.get("course_price", amount_paid))
         if payment_option == "full" or amount_paid >= expected_amount:
             payment_status = "completed"
         else:
@@ -165,92 +162,126 @@ class RegistrationAPIView(APIView):
 
     def _send_notifications(self, reg, course_obj=None, action=None):
         """
-        Sends emails to support and student for all actions using SendGrid
+        Sends detailed professional emails via SendGrid
         """
         if action == "newRegistration":
             # Support
             support_subject = f"🎓 New Student Registration: {reg.full_name}"
             support_message = f"""
-A new student has registered successfully.<br><br>
+<b>New Student Registration Alert</b><br><br>
+A new student has successfully registered.<br><br>
 
-Name: {reg.full_name}<br>
-Email: {reg.email}<br>
-Phone: {reg.phone}<br>
-Course: {reg.course.name if reg.course else "N/A"}<br>
-Mode of learning: {reg.mode_of_learning}<br>
-Payment option: {reg.payment_option}<br>
-Payment status: {reg.payment_status}<br>
-Reference: {reg.reference}<br>
-Message: {reg.message}<br>
+<b>Student Details:</b><br>
+- Name: {reg.full_name}<br>
+- Email: {reg.email}<br>
+- Phone: {reg.phone}<br>
+- Course: {reg.course.name if reg.course else "N/A"}<br>
+- Mode of learning: {reg.mode_of_learning}<br>
+- Payment option: {reg.payment_option.capitalize()}<br>
+- Payment status: {reg.payment_status.capitalize()}<br>
+- Reference: {reg.reference}<br>
+- Additional message: {reg.message or "None"}<br><br>
+
+📌 Please ensure the student’s LMS account is created and access credentials sent within 24 hours.<br><br>
+
+Regards,<br>
+<i>Fixlab Academy Automated System</i>
 """
+
             # Student
-            student_subject = f"Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
+            student_subject = f"✅ Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
             student_message = f"""
 Hello {reg.full_name},<br><br>
 
-We are delighted to confirm your registration for <b>{course_obj.name if course_obj else ''}</b> ({reg.mode_of_learning}).<br><br>
+Welcome to <b>Fixlab Academy</b>! 🎉<br>
+Your registration for <b>{course_obj.name if course_obj else ''}</b> ({reg.mode_of_learning}) has been confirmed.<br><br>
 
-📌 Payment option: {reg.payment_option.capitalize()}<br>
-📌 Payment status: {reg.payment_status.capitalize()}<br>
-📌 Payment reference: {reg.reference}<br><br>
+<b>Payment Details:</b><br>
+- Option: {reg.payment_option.capitalize()}<br>
+- Status: {reg.payment_status.capitalize()}<br>
+- Reference: {reg.reference}<br><br>
 
-Our support team is creating your LMS account.<br>
-➡️ You will receive your login details via email within 24 hours.<br><br>
+<b>Next Steps:</b><br>
+- Your LMS account is being created.<br>
+- You will receive login credentials via email within 24 hours.<br>
+- Our support team is available if you need assistance.<br><br>
 
-Best regards,<br>
-Fixlab Academy
+We are committed to providing world-class, practical training to help you achieve your career goals.<br><br>
+
+Warm regards,<br>
+<b>Fixlab Academy Team</b><br>
+<i>Transforming Learners into Professionals</i>
 """
+
         elif action == "installment":
-            support_subject = f"💰 Installment Updated: {reg.full_name}"
+            support_subject = f"💰 Installment Payment Update: {reg.full_name}"
             support_message = f"""
-Student installment status has been updated.<br><br>
+<b>Installment Payment Update</b><br><br>
+The following student’s payment record has been updated:<br><br>
 
-Name: {reg.full_name}<br>
-Email: {reg.email}<br>
-Course: {reg.course.name if reg.course else "N/A"}<br>
-Reference: {reg.reference}<br>
-Payment status: {reg.payment_status.capitalize()}<br>
+- Name: {reg.full_name}<br>
+- Email: {reg.email}<br>
+- Course: {reg.course.name if reg.course else "N/A"}<br>
+- Reference: {reg.reference}<br>
+- Current Status: {reg.payment_status.capitalize()}<br><br>
+
+📌 Please reconcile this payment and ensure the student’s account reflects the update.<br><br>
+
+Fixlab Academy Automated System
 """
-            student_subject = f"Payment Update - {reg.course.name if reg.course else ''}"
+
+            student_subject = f"📢 Payment Update - {reg.course.name if reg.course else ''}"
             student_message = f"""
 Hello {reg.full_name},<br><br>
 
-Your installment payment for <b>{reg.course.name if reg.course else ''}</b> has been updated.<br><br>
+Your installment payment for <b>{reg.course.name if reg.course else ''}</b> has been updated in our system.<br><br>
 
-📌 Payment status: {reg.payment_status.capitalize()}<br>
-📌 Payment reference: {reg.reference}<br><br>
+<b>Payment Details:</b><br>
+- Status: {reg.payment_status.capitalize()}<br>
+- Reference: {reg.reference}<br><br>
 
-Thank you for your commitment.<br><br>
+Thank you for your continued trust and commitment.<br><br>
+
 Best regards,<br>
-Fixlab Academy
+<b>Fixlab Academy Team</b>
 """
+
         elif action == "newCourse":
             support_subject = f"📚 New Course Enrollment: {reg.full_name}"
             support_message = f"""
+<b>New Course Enrollment</b><br><br>
 An existing student has enrolled in a new course.<br><br>
 
-Name: {reg.full_name}<br>
-Email: {reg.email}<br>
-New Course: {reg.course.name if reg.course else "N/A"}<br>
-Mode of learning: {reg.mode_of_learning}<br>
-Payment option: {reg.payment_option}<br>
-Payment status: {reg.payment_status}<br>
-Reference: {reg.reference}<br>
+- Name: {reg.full_name}<br>
+- Email: {reg.email}<br>
+- Course: {reg.course.name if reg.course else "N/A"}<br>
+- Mode: {reg.mode_of_learning}<br>
+- Payment option: {reg.payment_option.capitalize()}<br>
+- Payment status: {reg.payment_status.capitalize()}<br>
+- Reference: {reg.reference}<br><br>
+
+📌 Ensure LMS access is updated for the new course.<br><br>
+
+Fixlab Academy Automated System
 """
-            student_subject = f"Enrollment Update - {reg.course.name if reg.course else ''}"
+
+            student_subject = f"🎉 New Course Enrollment - {reg.course.name if reg.course else ''}"
             student_message = f"""
 Hello {reg.full_name},<br><br>
 
-Your enrollment has been successfully updated with a new course:<br>
-<b>{reg.course.name if reg.course else ''}</b> ({reg.mode_of_learning})<br><br>
+We’re excited to let you know your enrollment has been updated with a new course:<br><br>
 
-📌 Payment option: {reg.payment_option.capitalize()}<br>
-📌 Payment status: {reg.payment_status.capitalize()}<br>
-📌 Payment reference: {reg.reference}<br><br>
+<b>Course:</b> {reg.course.name if reg.course else ''}<br>
+<b>Mode of learning:</b> {reg.mode_of_learning}<br>
+<b>Payment option:</b> {reg.payment_option.capitalize()}<br>
+<b>Status:</b> {reg.payment_status.capitalize()}<br>
+<b>Reference:</b> {reg.reference}<br><br>
 
-Thank you for continuing your learning journey with us.<br><br>
+Our team will update your LMS account within 24 hours so you can start accessing your new course materials.<br><br>
+
 Best regards,<br>
-Fixlab Academy
+<b>Fixlab Academy Team</b><br>
+<i>Transforming Learners into Professionals</i>
 """
 
         # ✅ Send via SendGrid
