@@ -16,3 +16,5 @@ sqlparse==0.5.3
 tzdata==2025.2
 urllib3==2.5.0
 whitenoise==6.5.0
+sendgrid==6.11.0
+
