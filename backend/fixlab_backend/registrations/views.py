@@ -41,8 +41,9 @@ class HealthCheckView(View):
 
 class VerifyAndRegisterAPIView(APIView):
     """
-    Verify Paystack payment before registering student
+    Verify Paystack payment before proceeding with registration.
     """
+
     def post(self, request):
         reference = request.data.get("reference")
         if not reference:
@@ -76,7 +77,7 @@ class VerifyAndRegisterAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ✅ Payment verified, forward to Registration
+        # ✅ Payment verified, continue registration
         reg_view = RegistrationAPIView.as_view()
         return reg_view(request._request)
 
@@ -91,20 +92,20 @@ class RegistrationAPIView(APIView):
 
     def post(self, request):
         data = request.data
-        action = data.get('action')
-        email = data.get('email')
-        course_name = data.get('course')
-        reference = data.get('reference')
+        action = data.get("action")
+        email = data.get("email")
+        reference = data.get("reference")
+        course_name = data.get("course")
 
         if not action or not email or not reference:
             return Response(
-                {"success": False, "message": "Email, action, and reference are required."},
+                {"success": False, "message": "Action, email, and reference are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         # Get course if needed
         course_obj = None
-        if action in ["newRegistration", "newCourse"] and course_name:
+        if course_name:
             try:
                 course_obj = Course.objects.get(name=course_name)
             except Course.DoesNotExist:
@@ -113,21 +114,21 @@ class RegistrationAPIView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-        payment_option = data.get('payment_option', 'installment')
+        payment_option = data.get("payment_option", "installment")
         payment_status = "completed" if payment_option == "full" else "partial"
 
         # ---- NEW REGISTRATION ----
         if action == "newRegistration":
             serializer = RegistrationSerializer(data={
-                "full_name": data.get('full_name'),
+                "full_name": data.get("full_name"),
                 "email": email,
-                "phone": data.get('phone'),
-                "course": course_obj.id,
-                "mode_of_learning": data.get('mode_of_learning'),
+                "phone": data.get("phone"),
+                "course": course_obj.id if course_obj else None,
+                "mode_of_learning": data.get("mode_of_learning"),
                 "payment_option": payment_option,
                 "payment_status": payment_status,
                 "reference": reference,
-                "message": data.get('message', '')
+                "message": data.get("message", "")
             })
             if serializer.is_valid():
                 reg = serializer.save()
@@ -135,12 +136,12 @@ class RegistrationAPIView(APIView):
                 # Notify support
                 support_subject = f"🎓 New Student Registration: {reg.full_name}"
                 support_message = f"""
-A new student has registered:
+A new student has registered successfully.
 
 Name: {reg.full_name}
 Email: {reg.email}
 Phone: {reg.phone}
-Course: {reg.course.name}
+Course: {reg.course.name if reg.course else "N/A"}
 Mode of learning: {reg.mode_of_learning}
 Payment option: {reg.payment_option}
 Payment status: {reg.payment_status}
@@ -151,11 +152,11 @@ Message: {reg.message}
                           ["support@fixlabtech.freshdesk.com"])
 
                 # Notify student
-                student_subject = f"Welcome to Fixlab Academy - {course_obj.name}"
+                student_subject = f"Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
                 student_message = f"""
 Hello {reg.full_name},
 
-We are delighted to confirm your registration for **{course_obj.name}** ({reg.mode_of_learning}).
+We are delighted to confirm your registration for **{course_obj.name if course_obj else ''}** ({reg.mode_of_learning}).
 
 📌 Payment option: {reg.payment_option.capitalize()}
 📌 Payment status: {reg.payment_status.capitalize()}
@@ -177,37 +178,38 @@ Fixlab Academy
 
         # ---- INSTALLMENT ----
         elif action == "installment":
-            reg = Registration.objects.filter(email=email, reference=reference).first()
+            reg = Registration.objects.filter(email=email).order_by("-created_at").first()
             if not reg:
                 return Response(
-                    {"success": False, "message": "Registration not found."},
+                    {"success": False, "message": "No registration found for this email."},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
             reg.payment_status = "completed"
+            reg.reference = reference  # update with new payment ref
             reg.save()
 
             # Notify support
             support_subject = f"💰 Installment Completed: {reg.full_name}"
             support_message = f"""
-Student has completed installment payment:
+Student has completed installment payment.
 
 Name: {reg.full_name}
 Email: {reg.email}
-Course: {reg.course.name}
+Course: {reg.course.name if reg.course else "N/A"}
 Reference: {reg.reference}
 
-Payment status is now: Completed.
+Payment status updated to: Completed
 """
             send_mail(support_subject, support_message, settings.DEFAULT_FROM_EMAIL,
                       ["support@fixlabtech.freshdesk.com"])
 
             # Notify student
-            student_subject = f"Payment Confirmation - {reg.course.name}"
+            student_subject = f"Payment Confirmation - {reg.course.name if reg.course else ''}"
             student_message = f"""
 Hello {reg.full_name},
 
-We are pleased to confirm that your installment payment for **{reg.course.name}** has been completed.
+We are pleased to confirm that your installment payment for **{reg.course.name if reg.course else ''}** has been completed.
 
 📌 Payment status: Completed
 📌 Payment reference: {reg.reference}
@@ -219,7 +221,7 @@ Fixlab Academy
 """
             send_mail(student_subject, student_message, settings.DEFAULT_FROM_EMAIL, [email])
 
-            return Response({"success": True})
+            return Response({"success": True, "message": "Installment completed"})
 
         # ---- NEW COURSE ----
         elif action == "newCourse":
@@ -230,47 +232,45 @@ Fixlab Academy
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            if existing_reg.course == course_obj:
-                return Response(
-                    {"success": False, "message": "Student is already registered for this course."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            existing_reg.course = course_obj
-            existing_reg.mode_of_learning = data.get('mode_of_learning', existing_reg.mode_of_learning)
-            existing_reg.payment_option = payment_option
-            existing_reg.payment_status = payment_status
-            existing_reg.reference = data.reference
-            existing_reg.message = data.get('message', existing_reg.message)
-            existing_reg.save()
+            new_reg = Registration.objects.create(
+                full_name=existing_reg.full_name,
+                email=existing_reg.email,
+                phone=existing_reg.phone,
+                course=course_obj,
+                mode_of_learning=data.get("mode_of_learning", existing_reg.mode_of_learning),
+                payment_option=payment_option,
+                payment_status=payment_status,
+                reference=reference,
+                message=data.get("message", existing_reg.message)
+            )
 
             # Notify support
-            support_subject = f"📚 New Course Enrollment: {existing_reg.full_name}"
+            support_subject = f"📚 New Course Enrollment: {new_reg.full_name}"
             support_message = f"""
-An existing student has registered for a new course:
+An existing student has enrolled in a new course.
 
-Name: {existing_reg.full_name}
-Email: {existing_reg.email}
-New Course: {course_obj.name}
-Mode of learning: {existing_reg.mode_of_learning}
-Payment option: {existing_reg.payment_option}
-Payment status: {existing_reg.payment_status}
-Reference: {existing_reg.reference}
+Name: {new_reg.full_name}
+Email: {new_reg.email}
+New Course: {new_reg.course.name if new_reg.course else "N/A"}
+Mode of learning: {new_reg.mode_of_learning}
+Payment option: {new_reg.payment_option}
+Payment status: {new_reg.payment_status}
+Reference: {new_reg.reference}
 """
             send_mail(support_subject, support_message, settings.DEFAULT_FROM_EMAIL,
                       ["support@fixlabtech.freshdesk.com"])
 
             # Notify student
-            student_subject = f"Enrollment Update - {course_obj.name}"
+            student_subject = f"Enrollment Update - {course_obj.name if course_obj else ''}"
             student_message = f"""
-Hello {existing_reg.full_name},
+Hello {new_reg.full_name},
 
 Your enrollment has been successfully updated with a new course:  
-**{course_obj.name}** ({existing_reg.mode_of_learning})
+**{new_reg.course.name if new_reg.course else ''}** ({new_reg.mode_of_learning})
 
-📌 Payment option: {existing_reg.payment_option.capitalize()}
-📌 Payment status: {existing_reg.payment_status.capitalize()}
-📌 Payment reference: {existing_reg.reference}
+📌 Payment option: {new_reg.payment_option.capitalize()}
+📌 Payment status: {new_reg.payment_status.capitalize()}
+📌 Payment reference: {new_reg.reference}
 
 Thank you for continuing your learning journey with us.
 
@@ -297,7 +297,7 @@ class CheckUserAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        reg = Registration.objects.filter(email=email).first()
+        reg = Registration.objects.filter(email=email).order_by("-created_at").first()
         if not reg:
             return Response({"exists": False})
 
