@@ -24,7 +24,7 @@ class Registration(models.Model):
     )
 
     full_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     phone = models.CharField(max_length=20)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="registrations")
     mode_of_learning = models.CharField(max_length=10, choices=MODE_CHOICES)
