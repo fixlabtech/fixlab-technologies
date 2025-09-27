@@ -25,7 +25,19 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'message',
             'created_at'
         ]
+        # 👇 make payment_status read-only so only backend sets it
         read_only_fields = ['id', 'created_at', 'payment_status']
+
+    def create(self, validated_data):
+        """
+        Automatically set payment_status based on payment_option
+        """
+        payment_option = validated_data.get("payment_option")
+        # ✅ Default: "partial", unless full payment is chosen
+        validated_data["payment_status"] = (
+            "completed" if payment_option == "full" else "partial"
+        )
+        return super().create(validated_data)
 
     def validate_reference(self, value):
         """
