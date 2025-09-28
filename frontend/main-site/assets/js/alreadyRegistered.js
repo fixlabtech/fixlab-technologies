@@ -86,16 +86,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // ✅ Confirmation modal
+      // ✅ Confirmation modal (fix: show selected course if newCourse, otherwise current one)
       Swal.fire({
         title: "Confirm Action",
         html: `
           <p><b>Name:</b> ${data.full_name}</p>
           <p><b>Email:</b> ${data.email}</p>
-          <p><b>Current Course:</b> ${data.course}</p>
+          <p><b>Course:</b> ${action === "newCourse" ? course : data.course}</p>
           <p><b>Selected Action:</b> ${action}</p>
           ${action === "newCourse" ? `
-            <p><b>New Course:</b> ${course}</p>
             <p><b>Mode:</b> ${mode}</p>
             <p><b>Payment:</b> ${paymentOption}</p>` : ""}
         `,
@@ -111,6 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
             window.location.href = "payment-success.html"; // Go to success page for non-payment actions
           }
+        }
+      });
+    } catch (err) {
+      Swal.fire("Error", "Could not connect to server. Try again later.", "error");
+    }
+  });
+});          }
         }
       });
     } catch (err) {
