@@ -38,18 +38,23 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
     }
 
     try {
-        // ✅ Check backend for user existence (use encodeURIComponent for mobile too)
-        const checkResponse = await fetch(
-            `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
-        );
+        // ✅ Check backend if user exists using email
+        const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
         const data = await checkResponse.json();
 
-        if (!data.exists && action !== "newCourse") {
+        // ✅ If action is already registered, user must exist
+        if (action !== "newCourse" && !data.exists) {
             Swal.fire("Error", "User not found. Please register first.", "error");
             return;
         }
 
-        // ✅ Save for payment-success.js (so success page can complete registration)
+        // ✅ Prevent duplicate new course registration
+        if (action === "newCourse" && data.exists && data.course === course) {
+            Swal.fire("Error", "You are already registered for this course. Choose a different course.", "error");
+            return;
+        }
+
+        // ✅ Save registration data for payment-success.js
         localStorage.setItem("registrationData", JSON.stringify({
             email,
             action,
@@ -60,8 +65,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
         }));
 
         // ✅ Determine Paystack link based on mode
-        const payLink = paystackLinks[mode] || "";
-
+        const payLink = paystackLinks[mode];
         if (!payLink) {
             Swal.fire("Error", "Invalid mode selected. Please try again.", "error");
             return;
@@ -72,9 +76,9 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
             title: "Proceed to Payment?",
             html: `
                 <p><b>Email:</b> ${email}</p>
-                <p><b>Course:</b> ${course || "N/A"}</p>
-                <p><b>Mode:</b> ${mode || "N/A"}</p>
-                <p><b>Payment:</b> ${paymentOption || "N/A"}</p>
+                <p><b>Course:</b> ${course}</p>
+                <p><b>Mode:</b> ${mode}</p>
+                <p><b>Payment:</b> ${paymentOption}</p>
                 <p>You will be redirected to Paystack.</p>
             `,
             icon: "info",
