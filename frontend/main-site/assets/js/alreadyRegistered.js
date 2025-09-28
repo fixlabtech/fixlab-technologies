@@ -38,7 +38,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
     }
 
     try {
-        // ✅ Check backend for user info
+        // ✅ Check backend for user existence
         const checkResponse = await fetch(
             `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
         );
@@ -46,12 +46,6 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
 
         if (!data.exists && action !== "newCourse") {
             Swal.fire("Error", "User not found. Please register first.", "error");
-            return;
-        }
-
-        // ✅ Prevent duplicate new course registration
-        if (action === "newCourse" && data.exists && data.course === course) {
-            Swal.fire("Error", "You are already registered for this course. Choose a different course.", "error");
             return;
         }
 
