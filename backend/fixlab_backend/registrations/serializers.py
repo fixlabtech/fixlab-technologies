@@ -25,24 +25,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'message',
             'created_at'
         ]
-        # 👇 make payment_status read-only so only backend sets it
+        # Read-only fields; backend controls ID, timestamp, and payment_status
         read_only_fields = ['id', 'created_at', 'payment_status']
 
     def create(self, validated_data):
         """
-        Automatically set payment_status based on payment_option
+        Handle registration creation.
+        - Assign default reference if not provided
+        - Set payment_status to "partial" until payment verified
         """
-        payment_option = validated_data.get("payment_option")
-        # ✅ Default: "partial", unless full payment is chosen
-        validated_data["payment_status"] = (
-            "completed" if payment_option == "full" else "partial"
-        )
+        # If reference is missing or placeholder
+        validated_data["reference"] = validated_data.get("reference", "pending")
+
+        # Default payment status
+        validated_data["payment_status"] = "partial"
+
         return super().create(validated_data)
 
     def validate_reference(self, value):
         """
-        Each Paystack transaction generates a unique reference.
-        Prevent duplicates but allow same student/course to register multiple times with new references.
+        Prevent duplicate payment references
         """
         if Registration.objects.filter(reference=value).exists():
             raise serializers.ValidationError("This payment reference has already been used.")
