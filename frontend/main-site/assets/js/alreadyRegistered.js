@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("existingEmail").value.trim().toLowerCase();
     const action = actionSelect.value;
     const course = document.getElementById("newCourse")?.value || "";
-    const mode = document.getElementById("newMode")?.value || "";
+    const mode_of_learning = document.getElementById("newMode")?.value || "";
     const paymentOption = document.getElementById("newPaymentOption")?.value || "";
     const message = document.getElementById("message").value.trim();
 
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
           email,
           action,
           course,
-          mode,
+          mode_of_learning,
           payment_option: paymentOption,
           message
         })
