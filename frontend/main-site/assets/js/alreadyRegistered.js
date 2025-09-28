@@ -1,12 +1,22 @@
-// Already Registered Form
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("alreadyRegisteredForm");
+  const actionSelect = document.getElementById("actionSelect");
+  const newCourseFields = document.getElementById("newCourseFields");
+
+  // ✅ Toggle new course fields when action changes
+  actionSelect.addEventListener("change", () => {
+    if (actionSelect.value === "newCourse") {
+      newCourseFields.style.display = "block";
+    } else {
+      newCourseFields.style.display = "none";
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = document.getElementById("existingEmail").value.trim().toLowerCase();
-    const action = document.getElementById("actionSelect").value;
+    const action = actionSelect.value;
     const courseSelect = document.getElementById("newCourse");
     const modeSelect = document.getElementById("newMode");
     const paymentOptionSelect = document.getElementById("newPaymentOption");
