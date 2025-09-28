@@ -9,6 +9,6 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'email', 'course', 'mode_of_learning', 'payment_option', 'payment_status', 'reference', created_at')
+    list_display = ('full_name', 'email', 'course', 'mode_of_learning', 'payment_option', 'payment_status', 'reference', 'created_at')
     list_filter = ('course', 'mode_of_learning', 'payment_option', 'payment_status')
     search_fields = ('full_name', 'email', 'phone')
