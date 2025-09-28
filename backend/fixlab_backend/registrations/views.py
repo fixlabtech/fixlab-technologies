@@ -10,8 +10,9 @@ from .serializers import RegistrationSerializer
 from django.conf import settings
 import requests
 from django.core.cache import cache
+from datetime import datetime, timedelta
 
-# ✅ Import SendGrid helper
+# SendGrid helper
 from .utils import send_email_via_sendgrid
 
 
@@ -44,9 +45,9 @@ class HealthCheckView(View):
 class RegistrationAPIView(APIView):
     """
     Handles:
-    - newRegistration: first-time registration
-    - installment: complete installment
-    - newCourse: existing user adding a new course
+    - Pre-payment registration (action='newRegistration')
+    - Installments
+    - Adding new courses
     """
 
     def post(self, request):
@@ -55,35 +56,6 @@ class RegistrationAPIView(APIView):
         action = data.get("action")
         email = data.get("email")
         course_name = data.get("course")
-
-        if not reference:
-            return Response(
-                {"success": False, "message": "Payment reference is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # ----- VERIFY PAYSTACK PAYMENT -----
-        headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
-        url = f"https://api.paystack.co/transaction/verify/{reference}"
-
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            result = r.json()
-        except Exception as e:
-            return Response(
-                {"success": False, "message": f"Could not connect to Paystack: {str(e)}"},
-                status=status.HTTP_502_BAD_GATEWAY
-            )
-
-        if not result.get("status") or not result.get("data") or result["data"].get("status") != "success":
-            return Response(
-                {"success": False, "message": "Payment not successful."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        paystack_data = result["data"]
-        amount_paid = paystack_data.get("amount", 0) / 100  # Paystack returns amount in kobo
-        metadata = paystack_data.get("metadata", {})
 
         # ----- GET COURSE OBJECT -----
         course_obj = None
@@ -98,14 +70,7 @@ class RegistrationAPIView(APIView):
 
         payment_option = data.get("payment_option", "installment")
 
-        # ✅ Payment status logic
-        expected_amount = float(metadata.get("course_price", amount_paid))
-        if payment_option == "full" or amount_paid >= expected_amount:
-            payment_status = "completed"
-        else:
-            payment_status = "partial"
-
-        # ---- NEW REGISTRATION ----
+        # ---- NEW REGISTRATION (PRE-PAYMENT) ----
         if action == "newRegistration":
             serializer = RegistrationSerializer(data={
                 "full_name": data.get("full_name"),
@@ -114,14 +79,18 @@ class RegistrationAPIView(APIView):
                 "course": course_obj.id if course_obj else None,
                 "mode_of_learning": data.get("mode_of_learning"),
                 "payment_option": payment_option,
-                "payment_status": payment_status,
-                "reference": reference,
+                "reference": reference or "pending",
                 "message": data.get("message", "")
             })
             if serializer.is_valid():
                 reg = serializer.save()
-                self._send_notifications(reg, course_obj, action="newRegistration")
-                return Response({"success": True, "message": "Registration successful"})
+                # Emails are NOT sent yet; only after payment
+                return Response({
+                    "success": True,
+                    "message": "Registration recorded. Proceed to payment.",
+                    "registration_id": reg.id,
+                    "reference": reg.reference
+                })
             return Response({"success": False, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # ---- INSTALLMENT ----
@@ -130,8 +99,8 @@ class RegistrationAPIView(APIView):
             if not reg:
                 return Response({"success": False, "message": "No registration found for this email."},
                                 status=status.HTTP_404_NOT_FOUND)
-            reg.payment_status = payment_status
-            reg.reference = reference
+            reg.payment_status = "partial"
+            reg.reference = reference or reg.reference
             reg.save()
             self._send_notifications(reg, reg.course, action="installment")
             return Response({"success": True, "message": "Installment updated"})
@@ -150,8 +119,8 @@ class RegistrationAPIView(APIView):
                 course=course_obj,
                 mode_of_learning=data.get("mode_of_learning", existing_reg.mode_of_learning),
                 payment_option=payment_option,
-                payment_status=payment_status,
-                reference=reference,
+                payment_status="partial",
+                reference=reference or "pending",
                 message=data.get("message", existing_reg.message)
             )
             self._send_notifications(new_reg, course_obj, action="newCourse")
@@ -165,129 +134,103 @@ class RegistrationAPIView(APIView):
         Sends detailed professional emails via SendGrid
         """
         if action == "newRegistration":
-            # Support
+            # Support email
             support_subject = f"🎓 New Student Registration: {reg.full_name}"
             support_message = f"""
 <b>New Student Registration Alert</b><br><br>
-A new student has successfully registered.<br><br>
-
-<b>Student Details:</b><br>
-- Name: {reg.full_name}<br>
-- Email: {reg.email}<br>
-- Phone: {reg.phone}<br>
-- Course: {reg.course.name if reg.course else "N/A"}<br>
-- Mode of learning: {reg.mode_of_learning}<br>
-- Payment option: {reg.payment_option.capitalize()}<br>
-- Payment status: {reg.payment_status.capitalize()}<br>
-- Reference: {reg.reference}<br>
-- Additional message: {reg.message or "None"}<br><br>
-
-📌 Please ensure the student’s LMS account is created and access credentials sent within 24 hours.<br><br>
-
+Name: {reg.full_name}<br>
+Email: {reg.email}<br>
+Phone: {reg.phone}<br>
+Course: {reg.course.name if reg.course else "N/A"}<br>
+Mode of learning: {reg.mode_of_learning}<br>
+Payment option: {reg.payment_option.capitalize()}<br>
+Payment status: {reg.payment_status.capitalize()}<br>
+Reference: {reg.reference}<br>
+Message: {reg.message or "None"}<br><br>
+📌 Ensure the student’s LMS account is created and credentials sent within 24 hours.<br><br>
 Regards,<br>
 <i>Fixlab Academy Automated System</i>
 """
-
-            # Student
+            # Student email
             student_subject = f"Welcome to Fixlab Academy - {course_obj.name if course_obj else ''}"
             student_message = f"""
 Hello {reg.full_name},<br><br>
-
-Welcome to <b>Fixlab Academy</b>! 🎉<br>
-Your registration for <b>{course_obj.name if course_obj else ''}</b> ({reg.mode_of_learning}) has been confirmed.<br><br>
-
-<b>Payment Details:</b><br>
-- Option: {reg.payment_option.capitalize()}<br>
-- Status: {reg.payment_status.capitalize()}<br>
-- Reference: {reg.reference}<br><br>
-
-<b>Next Steps:</b><br>
-- Your LMS account is being created.<br>
-- You will receive login credentials via email within 24 hours.<br>
-- Our support team is available if you need assistance.<br><br>
-
-We are committed to providing world-class, practical training to help you achieve your career goals.<br><br>
-
-Warm regards,<br>
-<b>Fixlab Team</b><br>
-<i>Create, Innovate and Train</i>
+Your registration for <b>{course_obj.name if course_obj else ''}</b> ({reg.mode_of_learning}) has been recorded.<br>
+Payment status: {reg.payment_status.capitalize()}<br>
+Reference: {reg.reference}<br><br>
+Please complete your payment to finalize registration.<br><br>
+Warm regards,<br><b>Fixlab Team</b>
 """
+            send_email_via_sendgrid(support_subject, support_message, "support@fixlabtech.com")
+            send_email_via_sendgrid(student_subject, student_message, reg.email)
 
-        elif action == "installment":
-            support_subject = f"💰 Installment Payment Update: {reg.full_name}"
-            support_message = f"""
-<b>Installment Payment Update</b><br><br>
-The following student’s payment record has been updated:<br><br>
+        elif action in ["installment", "newCourse"]:
+            # Implement notifications if needed
+            pass
 
-- Name: {reg.full_name}<br>
-- Email: {reg.email}<br>
-- Course: {reg.course.name if reg.course else "N/A"}<br>
-- Reference: {reg.reference}<br>
-- Current Status: {reg.payment_status.capitalize()}<br><br>
-
-📌 Please reconcile this payment and ensure the student’s account reflects the update.<br><br>
-
-Fixlab Academy Automated System
-"""
-
-            student_subject = f"📢 Payment Update - {reg.course.name if reg.course else ''}"
-            student_message = f"""
+    @staticmethod
+    def send_pending_payment_reminders():
+        """
+        Send reminder emails to users with partial payment older than 4 days
+        """
+        four_days_ago = datetime.now() - timedelta(days=4)
+        pending_regs = Registration.objects.filter(payment_status="partial", created_at__lte=four_days_ago)
+        for reg in pending_regs:
+            subject = f"🔔 Payment Reminder - {reg.course.name if reg.course else ''}"
+            message = f"""
 Hello {reg.full_name},<br><br>
-
-Your installment payment for <b>{reg.course.name if reg.course else ''}</b> has been updated in our system.<br><br>
-
-<b>Payment Details:</b><br>
-- Status: {reg.payment_status.capitalize()}<br>
-- Reference: {reg.reference}<br><br>
-
-Thank you for your continued trust and commitment.<br><br>
-
-Best regards,<br>
-<b>Fixlab Team</b><br>
-<i>Create, Innovate and Train</i>
+We noticed your payment for <b>{reg.course.name if reg.course else ''}</b> is still pending.<br>
+Please complete your payment to confirm your registration.<br><br>
+Reference: {reg.reference}<br><br>
+Thank you,<br>Fixlab Team
 """
+            send_email_via_sendgrid(subject, message, reg.email)
 
-        elif action == "newCourse":
-            support_subject = f"📚 New Course Enrollment: {reg.full_name}"
-            support_message = f"""
-<b>New Course Enrollment</b><br><br>
-An existing student has enrolled in a new course.<br><br>
 
-- Name: {reg.full_name}<br>
-- Email: {reg.email}<br>
-- Course: {reg.course.name if reg.course else "N/A"}<br>
-- Mode: {reg.mode_of_learning}<br>
-- Payment option: {reg.payment_option.capitalize()}<br>
-- Payment status: {reg.payment_status.capitalize()}<br>
-- Reference: {reg.reference}<br><br>
+class PaymentVerificationAPIView(APIView):
+    """
+    Called after Paystack payment is completed.
+    Updates registration with real reference and sets payment_status to completed.
+    """
 
-📌 Ensure LMS access is updated for the new course.<br><br>
+    def post(self, request):
+        reference = request.data.get("reference")
+        registration_id = request.data.get("registration_id")
 
-Fixlab Academy Automated System
-"""
+        if not reference or not registration_id:
+            return Response({"success": False, "message": "Reference and registration ID required."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-            student_subject = f"🎉 New Course Enrollment - {reg.course.name if reg.course else ''}"
-            student_message = f"""
-Hello {reg.full_name},<br><br>
+        # Verify payment with Paystack
+        headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
+        url = f"https://api.paystack.co/transaction/verify/{reference}"
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            result = r.json()
+        except Exception as e:
+            return Response({"success": False, "message": f"Paystack error: {str(e)}"},
+                            status=status.HTTP_502_BAD_GATEWAY)
 
-We’re excited to let you know your enrollment has been updated with a new course:<br><br>
+        if not result.get("status") or not result.get("data") or result["data"].get("status") != "success":
+            return Response({"success": False, "message": "Payment not successful."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-<b>Course:</b> {reg.course.name if reg.course else ''}<br>
-<b>Mode of learning:</b> {reg.mode_of_learning}<br>
-<b>Payment option:</b> {reg.payment_option.capitalize()}<br>
-<b>Status:</b> {reg.payment_status.capitalize()}<br>
-<b>Reference:</b> {reg.reference}<br><br>
+        # Update registration
+        try:
+            reg = Registration.objects.get(id=registration_id)
+        except Registration.DoesNotExist:
+            return Response({"success": False, "message": "Registration not found."},
+                            status=status.HTTP_404_NOT_FOUND)
 
-Our team will update your LMS account within 24 hours so you can start accessing your new course materials.<br><br>
+        reg.reference = reference
+        reg.payment_status = "completed"
+        reg.save()
 
-Best regards,<br>
-<b>Fixlab Team</b><br>
-<i>Create, Innovate and Train</i>
-"""
+        # Send email notifications
+        course_obj = reg.course
+        RegistrationAPIView()._send_notifications(reg, course_obj, action="newRegistration")
 
-        # ✅ Send via SendGrid
-        send_email_via_sendgrid(support_subject, support_message, "support@fixlabtech.com")
-        send_email_via_sendgrid(student_subject, student_message, reg.email)
+        return Response({"success": True, "message": "Payment verified and registration completed."})
 
 
 class CheckUserAPIView(APIView):
