@@ -38,7 +38,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
     }
 
     try {
-        // ✅ Check backend for user existence
+        // ✅ Check backend for user existence (use encodeURIComponent for mobile too)
         const checkResponse = await fetch(
             `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
         );
@@ -49,7 +49,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
             return;
         }
 
-        // ✅ Save for payment-success.js
+        // ✅ Save for payment-success.js (so success page can complete registration)
         localStorage.setItem("registrationData", JSON.stringify({
             email,
             action,
@@ -59,7 +59,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
             message
         }));
 
-        // ✅ Determine Paystack link purely from mode
+        // ✅ Determine Paystack link based on mode
         const payLink = paystackLinks[mode] || "";
 
         if (!payLink) {
@@ -72,9 +72,9 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
             title: "Proceed to Payment?",
             html: `
                 <p><b>Email:</b> ${email}</p>
-                <p><b>Course:</b> ${course}</p>
-                <p><b>Mode:</b> ${mode}</p>
-                <p><b>Payment:</b> ${paymentOption}</p>
+                <p><b>Course:</b> ${course || "N/A"}</p>
+                <p><b>Mode:</b> ${mode || "N/A"}</p>
+                <p><b>Payment:</b> ${paymentOption || "N/A"}</p>
                 <p>You will be redirected to Paystack.</p>
             `,
             icon: "info",
@@ -89,7 +89,6 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
         });
 
     } catch (err) {
-        console.error("API Error:", err);
         Swal.fire("Error", "Something went wrong. Try again later.", "error");
     }
 });
