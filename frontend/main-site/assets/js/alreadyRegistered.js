@@ -39,7 +39,9 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
 
     try {
         // ✅ Check backend for user info
-        const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
+        const checkResponse = await fetch(
+            `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
+        );
         const data = await checkResponse.json();
 
         if (!data.exists && action !== "newCourse") {
@@ -53,7 +55,7 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
             return;
         }
 
-        // ✅ Save registration data for success.js
+        // ✅ Save for payment-success.js
         localStorage.setItem("registrationData", JSON.stringify({
             email,
             action,
