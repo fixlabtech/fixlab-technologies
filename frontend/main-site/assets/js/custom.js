@@ -1,6 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("courseRegistrationForm");
 
+  // ✅ Paystack Links
+  const paystackLinks = {
+    onsite: "https://paystack.shop/pay/fixlab_onsite_enroll",
+    virtual: "https://paystack.shop/pay/fixlab_virtual_enroll"
+  };
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -64,10 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
       action: "newRegistration"
     };
 
-    // Save for success.js
+    // ✅ Save for success.js
     localStorage.setItem("registrationData", JSON.stringify(data));
 
-    // Confirmation prompt
+    // ✅ Confirmation prompt
     Swal.fire({
       title: "Confirm Registration",
       html: `
@@ -85,12 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmButtonColor: "#1d4ed8"
     }).then((result) => {
       if (result.isConfirmed) {
-        // Redirect to Paystack depending on mode
-        if (mode === "onsite") {
-          window.location.href = "https://paystack.shop/pay/fixlab_onsite_enroll";
-        } else if (mode === "virtual") {
-          window.location.href = "https://paystack.shop/pay/fixlab_virtual_enroll";
+        const payLink = paystackLinks[mode] || "";
+        if (!payLink) {
+          Swal.fire("Error", "Invalid mode selected. Please try again.", "error");
+          return;
         }
+        window.location.href = payLink;
       }
     });
   });
