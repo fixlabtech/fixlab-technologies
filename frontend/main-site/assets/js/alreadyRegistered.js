@@ -86,15 +86,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // ✅ Confirmation modal (fix: show selected course if newCourse, otherwise current one)
+      // ✅ Confirmation modal — fixed to show new course only
       Swal.fire({
         title: "Confirm Action",
         html: `
           <p><b>Name:</b> ${data.full_name}</p>
           <p><b>Email:</b> ${data.email}</p>
-          <p><b>Course:</b> ${action === "newCourse" ? course : data.course}</p>
           <p><b>Selected Action:</b> ${action}</p>
           ${action === "newCourse" ? `
+            <p><b>New Course:</b> ${course}</p>
             <p><b>Mode:</b> ${mode}</p>
             <p><b>Payment:</b> ${paymentOption}</p>` : ""}
         `,
@@ -115,12 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       Swal.fire("Error", "Could not connect to server. Try again later.", "error");
     }
-  });
-});          }
-        }
-      });
-    } catch (err) {
-      Swal.fire("Error", "Could not connect to server. Try again later.", "error");
-    }
+
   });
 });
