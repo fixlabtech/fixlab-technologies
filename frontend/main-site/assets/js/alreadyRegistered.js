@@ -1,20 +1,10 @@
-// ✅ Paystack Links (based only on mode)
-const paystackLinks = {
-    onsite: "https://paystack.shop/pay/fixlab_onsite_enroll",
-    virtual: "https://paystack.shop/pay/fixlab_virtual_enroll"
-};
+// Already Registered Form
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("alreadyRegisteredForm");
 
-// ✅ Toggle new course fields
-document.getElementById("actionSelect").addEventListener("change", function () {
-    const newCourseFields = document.getElementById("newCourseFields");
-    newCourseFields.style.display = this.value === "newCourse" ? "block" : "none";
-});
-
-// ✅ Handle form submission
-document.getElementById("alreadyRegisteredForm").addEventListener("submit", async function (e) {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // ✅ Get values freshly at submission
     const email = document.getElementById("existingEmail").value.trim().toLowerCase();
     const action = document.getElementById("actionSelect").value;
     const courseSelect = document.getElementById("newCourse");
@@ -26,73 +16,80 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
     const mode = modeSelect ? modeSelect.value : "";
     const paymentOption = paymentOptionSelect ? paymentOptionSelect.value : "";
 
-    // ✅ Validate required fields
     if (!email || !action) {
-        Swal.fire("Error", "Please fill all required fields.", "error");
-        return;
+      Swal.fire("Error", "Please fill all required fields.", "error");
+      return;
     }
 
     if (action === "newCourse" && (!course || !mode || !paymentOption)) {
-        Swal.fire("Error", "Please fill all new course fields.", "error");
-        return;
+      Swal.fire("Error", "Please fill all new course fields.", "error");
+      return;
     }
 
     try {
-        // ✅ Check backend if user exists using email
-        const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
-        const data = await checkResponse.json();
+      // ✅ Check if user exists using email
+      const checkResponse = await fetch(
+        `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
+      );
+      const data = await checkResponse.json();
 
-        // ✅ If action is already registered, user must exist
-        if (action !== "newCourse" && !data.exists) {
-            Swal.fire("Error", "User not found. Please register first.", "error");
-            return;
+      if (!data.exists && action !== "newCourse") {
+        Swal.fire("Error", "User not found. Please register first.", "error");
+        return;
+      }
+
+      if (action === "newCourse" && data.exists && data.course === course) {
+        Swal.fire("Error", "You are already registered for this course. Choose a different course.", "error");
+        return;
+      }
+
+      // ✅ Save registration data for payment-success.js
+      localStorage.setItem(
+        "registrationData",
+        JSON.stringify({
+          email,
+          action,
+          course,
+          mode,
+          payment_option: paymentOption,
+          message
+        })
+      );
+
+      // ✅ Determine Paystack link based on mode
+      const paystackLinks = {
+        onsite: "https://paystack.shop/pay/fixlab_onsite_enroll",
+        virtual: "https://paystack.shop/pay/fixlab_virtual_enroll"
+      };
+      const payLink = paystackLinks[mode] || "";
+
+      if (!payLink) {
+        Swal.fire("Error", "Invalid mode selected. Please try again.", "error");
+        return;
+      }
+
+      // ✅ Confirmation modal
+      Swal.fire({
+        title: "Proceed to Payment?",
+        html: `
+          <p><b>Email:</b> ${email}</p>
+          <p><b>Course:</b> ${course}</p>
+          <p><b>Mode:</b> ${mode}</p>
+          <p><b>Payment:</b> ${paymentOption}</p>
+          <p>You will be redirected to Paystack.</p>
+        `,
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Proceed",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#1d4ed8"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = payLink;
         }
-
-        // ✅ Prevent duplicate new course registration
-        if (action === "newCourse" && data.exists && data.course === course) {
-            Swal.fire("Error", "You are already registered for this course. Choose a different course.", "error");
-            return;
-        }
-
-        // ✅ Save registration data for payment-success.js
-        localStorage.setItem("registrationData", JSON.stringify({
-            email,
-            action,
-            course,
-            mode,
-            payment_option: paymentOption,
-            message
-        }));
-
-        // ✅ Determine Paystack link based on mode
-        const payLink = paystackLinks[mode];
-        if (!payLink) {
-            Swal.fire("Error", "Invalid mode selected. Please try again.", "error");
-            return;
-        }
-
-        // ✅ Confirmation modal
-        Swal.fire({
-            title: "Proceed to Payment?",
-            html: `
-                <p><b>Email:</b> ${email}</p>
-                <p><b>Course:</b> ${course}</p>
-                <p><b>Mode:</b> ${mode}</p>
-                <p><b>Payment:</b> ${paymentOption}</p>
-                <p>You will be redirected to Paystack.</p>
-            `,
-            icon: "info",
-            showCancelButton: true,
-            confirmButtonText: "Proceed",
-            cancelButtonText: "Cancel",
-            confirmButtonColor: "#1d4ed8"
-        }).then(result => {
-            if (result.isConfirmed) {
-                window.location.href = payLink;
-            }
-        });
-
+      });
     } catch (err) {
-        Swal.fire("Error", "Something went wrong. Try again later.", "error");
+      Swal.fire("Error", "Something went wrong. Try again later.", "error");
     }
+  });
 });
