@@ -1,9 +1,7 @@
-// ✅ Paystack Links
+// ✅ Paystack Links (based only on mode)
 const paystackLinks = {
-    installment: "https://paystack.shop/pay/fixlab_virtual_enroll",
-    full: "https://paystack.shop/pay/fixlab_onsite_enroll",
-    newCourseFull: "https://paystack.shop/pay/fixlab_onsite_enroll",
-    newCourseInstallment: "https://paystack.shop/pay/fixlab_virtual_enroll"
+    onsite: "https://paystack.shop/pay/fixlab_onsite_enroll",
+    virtual: "https://paystack.shop/pay/fixlab_virtual_enroll"
 };
 
 // ✅ Toggle new course fields
@@ -16,15 +14,15 @@ document.getElementById("actionSelect").addEventListener("change", function () {
 document.getElementById("alreadyRegisteredForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    // ✅ Get values **freshly at submission**
+    // ✅ Get values freshly at submission
     const email = document.getElementById("existingEmail").value.trim().toLowerCase();
     const action = document.getElementById("actionSelect").value;
-    const courseSelect = document.getElementById("newCourse"); // <select> element
-    const modeSelect = document.getElementById("newMode"); // <select> element
-    const paymentOptionSelect = document.getElementById("newPaymentOption"); // <select> element
+    const courseSelect = document.getElementById("newCourse");
+    const modeSelect = document.getElementById("newMode");
+    const paymentOptionSelect = document.getElementById("newPaymentOption");
     const message = document.getElementById("message").value.trim();
 
-    const course = courseSelect ? courseSelect.value : ""; 
+    const course = courseSelect ? courseSelect.value : "";
     const mode = modeSelect ? modeSelect.value : "";
     const paymentOption = paymentOptionSelect ? paymentOptionSelect.value : "";
 
@@ -44,52 +42,33 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
         const checkResponse = await fetch(`https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`);
         const data = await checkResponse.json();
 
-        if (!data.exists) {
+        if (!data.exists && action !== "newCourse") {
             Swal.fire("Error", "User not found. Please register first.", "error");
             return;
         }
 
-        let courseToUse = course;
-        let modeToUse = mode;
-
-        // ✅ Installment: override course/mode from backend
-        if (action === "installment") {
-            if (!data.course) {
-                Swal.fire("Error", "You are not registered for any course. Please register first before paying an installment.", "error");
-                return;
-            }
-            if (data.payment_status === "completed") {
-                Swal.fire("Error", "Your payment for this course is already completed.", "error");
-                return;
-            }
-            courseToUse = data.course;
-            modeToUse = data.mode_of_learning;
-        }
-
         // ✅ Prevent duplicate new course registration
-        if (action === "newCourse" && data.course === course) {
+        if (action === "newCourse" && data.exists && data.course === course) {
             Swal.fire("Error", "You are already registered for this course. Choose a different course.", "error");
             return;
         }
 
-        // ✅ Save registration data
+        // ✅ Save registration data for success.js
         localStorage.setItem("registrationData", JSON.stringify({
             email,
             action,
-            course: courseToUse,
-            mode: modeToUse,
+            course,
+            mode,
             payment_option: paymentOption,
             message
         }));
 
-        // ✅ Determine Paystack link
-        let payLink = "";
-        if (mode === "virtual") {
-            payLink = paystackLinks.installment;
-        } else if (mode === "onsite") {
-            payLink = paystackLinks.full;
-        } else if (action === "newCourse") {
-            payLink = mode === "onsite" ? paystackLinks.newCourseFull : paystackLinks.newCourseInstallment;
+        // ✅ Determine Paystack link purely from mode
+        const payLink = paystackLinks[mode] || "";
+
+        if (!payLink) {
+            Swal.fire("Error", "Invalid mode selected. Please try again.", "error");
+            return;
         }
 
         // ✅ Confirmation modal
@@ -97,8 +76,8 @@ document.getElementById("alreadyRegisteredForm").addEventListener("submit", asyn
             title: "Proceed to Payment?",
             html: `
                 <p><b>Email:</b> ${email}</p>
-                <p><b>Course:</b> ${courseToUse}</p>
-                <p><b>Mode:</b> ${modeToUse}</p>
+                <p><b>Course:</b> ${course}</p>
+                <p><b>Mode:</b> ${mode}</p>
                 <p><b>Payment:</b> ${paymentOption}</p>
                 <p>You will be redirected to Paystack.</p>
             `,
