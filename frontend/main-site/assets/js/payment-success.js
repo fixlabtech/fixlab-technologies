@@ -1,3 +1,4 @@
+console.log("Posting registration data:", registrationData);
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const reference = urlParams.get("reference");
