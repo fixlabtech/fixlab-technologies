@@ -98,7 +98,7 @@ class RegistrationAPIView(APIView):
                 "phone": data.get("phone"),
                 "address": data.get("address"),
                 "occupation": data.get("occupation"),
-                "course": course_obj.id,
+                "course": course_obj.name,
                 "reference_no": reference_no,
                 "message": data.get("message", "")
             })
