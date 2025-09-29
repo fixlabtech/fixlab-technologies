@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
 
-  // ✅ Accept either 'reference' or 'trxref' from Paystack
+  // Accept either 'reference' or 'trxref' from Paystack
   const reference = urlParams.get("reference") || urlParams.get("trxref");
 
   if (!reference) {
@@ -12,18 +12,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-    const response = await fetch("https://www.services.fixlabtech.com/api/verify-payment/", {
-      method: "GET", // Use GET since your Django API expects reference in query params
-      headers: { "Content-Type": "application/json" },
-      // Send reference as query param
+    // ✅ Use GET with query parameter
+    const verifyUrl = `https://www.services.fixlabtech.com/api/verify-payment/?reference=${reference}`;
+    const response = await fetch(verifyUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" }
     });
 
-    // Append reference as query string
-    const verifyUrl = `https://www.services.fixlabtech.com/api/verify-payment/?reference=${reference}`;
-    const verifyResponse = await fetch(verifyUrl);
-    const result = await verifyResponse.json();
+    const result = await response.json();
 
-    if (verifyResponse.ok && result.success) {
+    if (response.ok && result.success) {
       Swal.fire({
         icon: "success",
         title: "Payment Verified & Registration Complete 🎉",
