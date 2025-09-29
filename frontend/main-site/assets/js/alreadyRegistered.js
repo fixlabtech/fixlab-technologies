@@ -1,140 +1,145 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("alreadyRegisteredForm");
-  const actionSelect = document.getElementById("actionSelect");
   const newCourseFields = document.getElementById("newCourseFields");
 
-  // Toggle extra fields when action is "newCourse"
-  actionSelect.addEventListener("change", () => {
-    if (actionSelect.value === "newCourse") {
-      newCourseFields.style.display = "block";
-    } else {
-      newCourseFields.style.display = "none";
-    }
-  });
+  const toggleNewCourseFields = (show) => {
+    newCourseFields.style.display = show ? "block" : "none";
+  };
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = document.getElementById("existingEmail").value.trim().toLowerCase();
-    const action = actionSelect.value;
     const course = document.getElementById("newCourse")?.value || "";
-    const mode_of_learning = document.getElementById("newMode")?.value || "";
-    const payment_option = document.getElementById("newPaymentOption")?.value || "";
-    const message = document.getElementById("message").value.trim();
 
-    if (!email || !action) {
-      Swal.fire("Error", "Please fill all required fields.", "error");
+    if (!email) {
+      Swal.fire("Error", "Please enter your email.", "error");
       return;
     }
-
-    if (action === "newCourse" && (!course || !mode_of_learning || !payment_option)) {
-      Swal.fire("Error", "Please fill all new course fields.", "error");
+    if (!isValidEmail(email)) {
+      Swal.fire("Error", "Please enter a valid email address.", "error");
       return;
     }
 
     try {
-      // Check if user exists
+      // Step 1: Check if user exists
       const checkResponse = await fetch(
         `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
       );
       const userData = await checkResponse.json();
 
       if (!userData.exists) {
-        Swal.fire("Error", "No user found with this email. Please register first.", "error");
+        Swal.fire({
+          icon: "info",
+          title: "Not Registered",
+          text: "No user found with this email. You need to register first.",
+          confirmButtonText: "Register Now",
+          confirmButtonColor: "#1d4ed8",
+        }).then(() => {
+          window.location.href = "new-registration.html"; 
+        });
         return;
       }
 
-      // Action-specific checks
-      if (action === "installment" && userData.payment_status === "completed") {
-        Swal.fire("Info", "You have already completed payment for your course.", "info");
+      // Step 2: Check pending payment
+      if (userData.payment_status === "pending" && userData.reference_no) {
+        const continuePending = await Swal.fire({
+          title: "Pending Payment Found",
+          text: `You have a pending payment for ${userData.course}. Do you want to continue it?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Continue Payment",
+          cancelButtonText: "Enroll New Course",
+        });
+
+        if (continuePending.isConfirmed) {
+          // Continue pending payment using reference_no
+          const payLink = `https://paystack.shop/pay/continue?reference=${userData.reference_no}`;
+          window.location.href = payLink;
+          return;
+        }
+      }
+
+      // Step 3: Show new course fields
+      toggleNewCourseFields(true);
+
+      if (!course) {
+        Swal.fire("Error", "Please select a new course to enroll.", "error");
         return;
       }
 
-      if (action === "newCourse" && userData.course === course && userData.mode_of_learning === mode_of_learning) {
-        Swal.fire("Error", "You are already enrolled in this course & mode. Choose a different one.", "error");
+      // Step 4: Prevent duplicate enrollment
+      if (userData.course === course && userData.payment_status === "completed") {
+        Swal.fire(
+          "Error",
+          "You are already enrolled in this course. Choose a different course.",
+          "error"
+        );
         return;
       }
 
-      // Prepare payload to send directly to backend
+      // Step 5: Send enrollment request to backend
       const payload = {
         email,
-        action,
+        action: "newCourse",
         course,
-        mode_of_learning,
-        payment_option,
-        message
+        message: "",
       };
 
-      const regResponse = await fetch("https://www.services.fixlabtech.com/api/registrations/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const regResponse = await fetch(
+        "https://www.services.fixlabtech.com/api/registrations/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const regResult = await regResponse.json();
 
       if (!regResponse.ok || !regResult.success) {
-        Swal.fire("Error", regResult.message || "Failed to register action.", "error");
+        Swal.fire(
+          "Error",
+          regResult.message || "Failed to enroll in new course.",
+          "error"
+        );
         return;
       }
 
-      // If newCourse, redirect to Paystack with registration_id and mode
-      if (action === "newCourse") {
-        const paystackLinks = {
-          onsite: "https://paystack.shop/pay/fixlab_onsite_enroll",
-          virtual: "https://paystack.shop/pay/fixlab_virtual_enroll"
-        };
-
-        const payLink = `${paystackLinks[mode_of_learning]}?registration_id=${regResult.registration_id}`;
-        if (!payLink) {
-          Swal.fire("Error", "Invalid mode selected. Please try again.", "error");
-          return;
-        }
-
+      // Step 6: Redirect to backend-provided payment URL for new course
+      if (regResult.payment_url) {
         Swal.fire({
-          title: "Confirm New Course Enrollment",
-          html: `
-            <p><b>Name:</b> ${userData.full_name}</p>
-            <p><b>Email:</b> ${userData.email}</p>
-            <p><b>New Course:</b> ${course}</p>
-            <p><b>Mode:</b> ${mode_of_learning}</p>
-            <p><b>Payment Option:</b> ${payment_option}</p>
-            <p>Do you want to proceed to payment?</p>
-          `,
+          title: "Confirm Enrollment",
+          html: `<p><b>Name:</b> ${userData.full_name}</p>
+                 <p><b>Email:</b> ${userData.email}</p>
+                 <p><b>New Course:</b> ${course}</p>
+                 <p>Do you want to proceed to payment?</p>`,
           icon: "question",
           showCancelButton: true,
-          confirmButtonText: "Yes, Proceed",
+          confirmButtonText: "Proceed to Payment",
           cancelButtonText: "Cancel",
-          confirmButtonColor: "#1d4ed8"
+          confirmButtonColor: "#1d4ed8",
         }).then((result) => {
           if (result.isConfirmed) {
-            window.location.href = payLink;
+            window.location.href = regResult.payment_url; // backend URL
           }
         });
       } else {
-        // Non-payment actions (installment) — payment_success page
-        Swal.fire({
-          icon: "success",
-          title: "Action Recorded",
-          text: regResult.message || "Your request has been processed.",
-          confirmButtonText: "Return Home",
-          confirmButtonColor: "#1d4ed8"
-        }).then(() => {
-          window.location.href = "index.html";
-        });
+        Swal.fire(
+          "Error",
+          "No payment link received. Please try again.",
+          "error"
+        );
       }
-
     } catch (err) {
-      Swal.fire("Server Error", "Could not connect to server. Try again later.", "error");
+      Swal.fire(
+        "Server Error",
+        "Could not connect to server. Try again later.",
+        "error"
+      );
+      console.error(err);
     }
-  });
-});            window.location.href = "payment-success.html"; // Go to success page for non-payment actions
-          }
-        }
-      });
-    } catch (err) {
-      Swal.fire("Error", "Could not connect to server. Try again later.", "error");
-    }
-
   });
 });
