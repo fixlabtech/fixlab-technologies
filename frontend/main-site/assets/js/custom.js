@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Payload to backend:", payload); // For debugging
 
       const backendResponse = await fetch(
-        "https://www.services.fixlabtech.com/api/registrations",
+        "https://www.services.fixlabtech.com/api/registrations/",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
