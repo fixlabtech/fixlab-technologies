@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .models import Registration, Course
 
+
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['id', 'name', 'code']
+        fields = ['id', 'name', 'code', 'amount']
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -15,37 +16,33 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'full_name',
+            'gender',
             'email',
             'phone',
+            'address',
+            'occupation',
             'course',
             'mode_of_learning',
-            'payment_option',
             'payment_status',
-            'reference',
+            'reference_no',   # ✅ renamed here
             'message',
             'created_at'
         ]
-        # Read-only fields; backend controls ID, timestamp, and payment_status
         read_only_fields = ['id', 'created_at', 'payment_status']
 
     def create(self, validated_data):
         """
-        Handle registration creation.
-        - Assign default reference if not provided
-        - Set payment_status to "partial" until payment verified
+        - Do NOT generate reference_no here.
+        - reference_no is returned by Paystack when initializing a transaction.
+        - Backend updates registration with Paystack’s reference.
         """
-        # If reference is missing or placeholder
-        validated_data["reference"] = validated_data.get("reference", "pending")
-
-        # Default payment status
-        validated_data["payment_status"] = "partial"
-
+        validated_data["payment_status"] = "pending"
         return super().create(validated_data)
 
-    def validate_reference(self, value):
+    def validate_reference_no(self, value):
         """
-        Prevent duplicate payment references
+        Ensure reference_no is unique.
         """
-        if Registration.objects.filter(reference=value).exists():
-            raise serializers.ValidationError("This payment reference has already been used.")
+        if Registration.objects.filter(reference_no=value).exists():
+            raise serializers.ValidationError("This reference number has already been used.")
         return value
