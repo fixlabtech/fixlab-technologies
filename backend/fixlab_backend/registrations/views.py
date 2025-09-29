@@ -219,17 +219,22 @@ class PaymentVerificationAPIView(APIView):
         completed_courses = Registration.objects.filter(email=reg.email, payment_status="completed").exclude(id=reg.id)
 
         if completed_courses.exists():
-            student_subject = f"✅ Payment Confirmed - New Course ({reg.course.name})"
+            student_subject = f"New Course Registration)"
             student_msg = self._build_email_html(
                 title="Payment Confirmed",
                 greeting=reg.full_name,
                 message=f"Your payment for the <strong>additional course {reg.course.name}</strong> has been successfully received.",
                 table_rows=[
                     ("Course", reg.course.name),
-                    ("Reference", reg.reference_no),
+                    ("Amount Paid", f"₦{reg.course.amount}"),
+                    ("Reference No.", reg.reference_no),
                     ("Date", reg.created_at.strftime("%d %B %Y, %I:%M %p"))
                 ],
-                footer="Thank you for continuing your learning journey with <strong>Fixlab Academy</strong>."
+                footer="Thank you for continuing your learning journey with <strong>Fixlab Academy, your LMS account will be updated with the new course within 24 hours</strong>.
+                </br>
+                Warm regards</br>
+                Fixlab Academy Team </br>
+                <i>Creat, Innovate and Train</i>"
             )
             support_subject = f"🎓 New Course Payment Received - {reg.full_name}"
             support_msg = self._build_email_html(
@@ -242,21 +247,26 @@ class PaymentVerificationAPIView(APIView):
                     ("Reference", reg.reference_no),
                     ("Date", reg.created_at.strftime("%d %B %Y, %I:%M %p"))
                 ],
-                footer="✅ Action: Update student LMS account with the new course within 24 hours."
+                footer="Update student LMS account with the new course within 24 hours."
             )
         else:
-            student_subject = f"✅ Payment Confirmed - {reg.course.name}"
+            student_subject = f"Course Registration"
             student_msg = self._build_email_html(
                 title="Payment Confirmed",
                 greeting=reg.full_name,
-                message=f"Your registration for <strong>{reg.course.name}</strong> has been confirmed. Payment received successfully.",
+                message=f"Your registration for <strong>{reg.course.name}</strong> has been confirmed and Payment received successfully.",
                 table_rows=[
-                    ("Reference", reg.reference_no),
+                    ("Course", reg.course.name),
+                    ("Amount Paid", f"₦{reg.course.amount}"),
+                    ("Reference No.", reg.reference_no),
                     ("Date", reg.created_at.strftime("%d %B %Y, %I:%M %p"))
                 ],
-                footer="📌 Our academic support team will contact you within 24 hours with your LMS credentials and schedule."
+                footer="Our academic support team will contact you within 24 hours with your LMS credentials and schedule. </br>
+                Warm regards</br>
+                Fixlab Academy Team </br>
+                <i>Creat, Innovate and Train</i>"
             )
-            support_subject = f"🎓 New Registration Payment Received - {reg.full_name}"
+            support_subject = f"New Registration Received"
             support_msg = self._build_email_html(
                 title="New Registration Payment Received",
                 greeting=None,
@@ -270,7 +280,7 @@ class PaymentVerificationAPIView(APIView):
                     ("Reference", reg.reference_no),
                     ("Date", reg.created_at.strftime("%d %B %Y, %I:%M %p"))
                 ],
-                footer="✅ Action: Create a new LMS account and send credentials within 24 hours."
+                footer="Create a new LMS account and send credentials within 24 hours."
             )
 
         send_email_via_sendgrid(student_subject, student_msg, reg.email)
