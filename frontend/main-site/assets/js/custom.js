@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const address = document.getElementById("address").value.trim();
     const occupation = document.getElementById("occupation").value.trim();
     const course = document.getElementById("course").value;
+    Const message = document.getElementById("message).value.trim()
 
     // ✅ Validate required fields
     if (!name || !email || !phone || !gender || !address || !occupation || !mode || !course) {
@@ -99,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
             address: address,
             occupation: occupation,
             course: course,
+            message: message,
             action: "newRegistration"
           })
         }
