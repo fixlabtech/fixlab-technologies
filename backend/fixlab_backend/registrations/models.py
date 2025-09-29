@@ -17,11 +17,7 @@ class Registration(models.Model):
         ('failed', 'Failed'),       # Payment attempt failed/cancelled
     )
 
-    MODE_CHOICES = (
-        ("onsite", "Onsite"),
-        ("virtual", "Virtual"),
-    )
-
+    
     GENDER_CHOICES = (
         ("male", "Male"),
         ("female", "Female"),
@@ -35,7 +31,6 @@ class Registration(models.Model):
     address = models.TextField(blank=True, null=True)
     occupation = models.CharField(max_length=100, blank=True, null=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="registrations")
-    mode_of_learning = models.CharField(max_length=10, choices=MODE_CHOICES)
     payment_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     reference_no = models.CharField(max_length=100, unique=True)  # ✅ Paystack reference number
     message = models.TextField(blank=True, null=True)
