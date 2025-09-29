@@ -3,45 +3,49 @@ from django.db import models
 
 class Course(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=20, blank=True)  # Google Classroom code
+    amount = models.DecimalField(max_digits=10, decimal_places=2)  # ✅ Course fee
+    code = models.CharField(max_length=20, blank=True)  # Optional: Classroom/Zoom/internal code
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - ₦{self.amount}"
 
 
 class Registration(models.Model):
-    PAYMENT_CHOICES = (
-        ('full', 'Full Payment'),
-        ('installment', 'Installment')
-    )
     STATUS_CHOICES = (
-        ('partial', 'Partial'),
-        ('completed', 'Completed')
+        ('pending', 'Pending'),     # Registration created, awaiting payment
+        ('completed', 'Completed'), # Payment verified successfully
+        ('failed', 'Failed'),       # Payment attempt failed/cancelled
     )
+
     MODE_CHOICES = (
         ("onsite", "Onsite"),
         ("virtual", "Virtual"),
     )
 
+    GENDER_CHOICES = (
+        ("male", "Male"),
+        ("female", "Female"),
+        ("other", "Other"),
+    )
+
     full_name = models.CharField(max_length=100)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
+    address = models.TextField(blank=True, null=True)
+    occupation = models.CharField(max_length=100, blank=True, null=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="registrations")
     mode_of_learning = models.CharField(max_length=10, choices=MODE_CHOICES)
-    payment_option = models.CharField(max_length=20, choices=PAYMENT_CHOICES)
-    payment_status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    reference = models.CharField(max_length=100, unique=True)  # ✅ added
+    payment_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    reference = models.CharField(max_length=100, unique=True)  # Unique payment reference
     message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.full_name} - {self.course.name}"
+        return f"{self.full_name} - {self.course.name} ({self.payment_status})"
 
+    @property
+    def amount_due(self):
+        """ Always return the full course fee (since no installments) """
+        return self.course.amount
 
-class NewsletterSubscriber(models.Model):
-    email = models.EmailField(unique=True)
-    subscribed_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.email
