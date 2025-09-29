@@ -9,7 +9,11 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    # Use course name instead of primary key
+    course = serializers.SlugRelatedField(
+        queryset=Course.objects.all(),
+        slug_field='name'
+    )
 
     class Meta:
         model = Registration
