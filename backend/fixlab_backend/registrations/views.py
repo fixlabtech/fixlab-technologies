@@ -223,20 +223,20 @@ class PaymentVerificationAPIView(APIView):
             student_msg = self._build_email_html(
                 title="Payment Confirmed",
                 greeting=reg.full_name,
-                message=f"Your payment for the <strong>additional course {reg.course.name}</strong> has been successfully received.<br><b> Registration Details: </b>",
+                message=f"Your payment for the <strong>additional course {reg.course.name}</strong> has been successfully received.<p><b> Registration Details: </p>",
                 table_rows=[
                     ("Course", reg.course.name),
                     ("Amount Paid", f"₦{reg.course.amount}"),
                     ("Reference No.", reg.reference_no),
                     ("Date", reg.created_at.strftime("%d %B %Y, %I:%M %p"))
                 ],
-                footer="Thank you for continuing your learning journey with <strong>Fixlab Academy, your LMS account will be updated with the new course within 24 hours</strong>.<br>Warm regards<p>Fixlab Academy Team </p><p><i>Creat, Innovate and Train</i></p>"
+                footer="Thank you for continuing your learning journey with <strong>Fixlab Academy, your LMS account will be updated with the new course within 24 hours</strong>.<p>Warm regards<br>Fixlab Academy Team <br><i>Creat, Innovate and Train</i></p>"
             )
             support_subject = f"New Course Payment Received - {reg.full_name}"
             support_msg = self._build_email_html(
                 title="New Course Payment Received",
                 greeting=None,
-                message=f"Student <strong>{reg.full_name}</strong> has successfully paid for a new course.<br><b> Registration Details: </b>",
+                message=f"Student <strong>{reg.full_name}</strong> has successfully paid for a new course.<p><b> Registration Details: </b></p>",
                 table_rows=[
                     ("Course", reg.course.name),
                     ("Amount Paid", f"₦{reg.course.amount}"),
@@ -250,7 +250,7 @@ class PaymentVerificationAPIView(APIView):
             student_msg = self._build_email_html(
                 title="Payment Confirmed",
                 greeting=reg.full_name,
-                message=f"Your registration for <strong>{reg.course.name}</strong> has been confirmed.<br><b> Registration Details: </b>",
+                message=f"Your registration for <strong>{reg.course.name}</strong> has been confirmed.<p><b> Registration Details: </b></p>",
                 table_rows=[
                     ("Course", reg.course.name),
                     ("Amount Paid", f"₦{reg.course.amount}"),
@@ -263,7 +263,7 @@ class PaymentVerificationAPIView(APIView):
             support_msg = self._build_email_html(
                 title="New Registration Payment Received",
                 greeting=None,
-                message=f"A new student has successfully registered and paid.<br><b> Registration Details:</b>",
+                message=f"A new student has successfully registered and paid.<p><b> Registration Details:</p>",
                 table_rows=[
                     ("Name", reg.full_name),
                     ("Email", reg.email),
