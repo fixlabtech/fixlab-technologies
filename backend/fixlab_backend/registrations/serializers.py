@@ -22,7 +22,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'address',
             'occupation',
             'course',
-            'mode_of_learning',
             'payment_status',
             'reference_no',   # ✅ renamed here
             'message',
