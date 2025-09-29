@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Const message = document.getElementById("message).value.trim()
 
     // ✅ Validate required fields
-    if (!name || !email || !phone || !gender || !address || !occupation || !mode || !course) {
+    if (!name || !email || !phone || !gender || !address || !occupation || !message || !course) {
       Swal.fire({
         icon: "warning",
         title: "Missing Fields",
