@@ -241,7 +241,7 @@ Thank you for continuing your learning journey with <b>Fixlab Academy</b>.<br><b
 
 Warm regards,<br>
 <b>Fixlab Academy Team</b><br>
-<i>support@fixlabtech.com</i>
+<i>create, innovate and Train</i>
 """
             support_subject = f"🎓 New Course Payment Received - {reg.full_name}"
             support_msg = f"""
@@ -289,7 +289,7 @@ Welcome to <b>Fixlab Academy</b>. We are excited to support your learning journe
 
 Warm regards,<br>
 <b>Fixlab Academy Team</b><br>
-<i>support@fixlabtech.com</i>
+<i>create, innovate and Train</i>
 """
             support_subject = f"🎓 New Registration Payment Received - {reg.full_name}"
             support_msg = f"""
@@ -320,7 +320,7 @@ Regards,<br>
 
         # Send both student and support emails
         send_email_via_sendgrid(student_subject, student_msg, reg.email)
-        send_email_via_sendgrid(support_subject, support_msg, "support@fixlabtech.com")
+        send_email_via_sendgrid(support_subject, support_msg, "support@fixlabtech.freshdesk.com")
 
 
 class CheckUserAPIView(APIView):
