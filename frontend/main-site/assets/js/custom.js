@@ -1,13 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("courseRegistrationForm");
 
-  // Email validation (basic RFC compliant check)
+  // Email validation
   function isValidEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   }
 
-  // Phone validation (accepts digits, allows +, min length 7, max 15)
+  // Phone validation
   function isValidPhone(phone) {
     const re = /^\+?\d{7,15}$/;
     return re.test(phone);
@@ -26,8 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const course = document.getElementById("course").value;
     const message = document.getElementById("message").value.trim();
 
-
-    // ✅ Validate required fields
+    // Validate required fields
     if (!name || !email || !phone || !gender || !address || !occupation || !course) {
       Swal.fire({
         icon: "warning",
@@ -40,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // ✅ Validate email format
+    // Validate email
     if (!isValidEmail(email)) {
       Swal.fire({
         icon: "error",
@@ -53,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // ✅ Validate phone number format
+    // Validate phone
     if (!isValidPhone(phone)) {
       Swal.fire({
         icon: "error",
@@ -66,8 +65,26 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // ✅ Step 1: Confirm registration before sending to backend
+    const confirmResult = await Swal.fire({
+      title: "Confirm Registration",
+      html: `
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Course:</b> ${course}</p>
+        <p>Do you want to proceed to payment?</p>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Proceed",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#1d4ed8"
+    });
+
+    if (!confirmResult.isConfirmed) return; // Stop if user cancels
+
     try {
-      // ✅ 1. Check if user already registered
+      // Step 2: Check if user already registered
       const checkResponse = await fetch(
         `https://www.services.fixlabtech.com/api/check-user?email=${encodeURIComponent(email)}`
       );
@@ -82,12 +99,12 @@ document.addEventListener("DOMContentLoaded", () => {
           confirmButtonText: "Go to Already Registered",
           confirmButtonColor: "#1d4ed8"
         }).then(() => {
-          window.location.href = "/user"; // 👉 adjust route
+          window.location.href = "/user"; // Adjust route
         });
         return;
       }
 
-      // ✅ 2. Register new student in backend
+      // Step 3: Send registration to backend
       const backendResponse = await fetch(
         "https://www.services.fixlabtech.com/api/registrations",
         {
@@ -121,42 +138,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // ✅ 3. Confirm & redirect to payment (using backend link)
-      const payLink = backendResult.payment_url; // <-- Backend must return this
-      if (!payLink) {
-        Swal.fire({
-          icon: "error",
-          title: "Payment Error",
-          text: "Payment link not available. Please contact support.",
-          confirmButtonColor: "#dc2626"
-        });
-        return;
-      }
+      // Step 4: Redirect to Paystack
+      const payLink = backendResult.payment_url;
+      if (!payLink) throw new Error("Payment link not provided by backend");
 
-      Swal.fire({
-        title: "Confirm Registration",
-        html: `
-          <p><b>Name:</b> ${name}</p>
-          <p><b>Email:</b> ${email}</p>
-          <p><b>Course:</b> ${course}</p>
-          <p>Do you want to proceed to payment?</p>
-        `,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "Yes, Proceed",
-        cancelButtonText: "Cancel",
-        confirmButtonColor: "#1d4ed8"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = payLink; // ✅ from backend
-        }
-      });
+      window.location.href = payLink; // Redirect user
 
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Network/Server Error",
-        text: "Unable to complete registration at the moment. Please check your connection or try again later.",
+        text: error.message || "Unable to complete registration at the moment.",
         confirmButtonColor: "#dc2626"
       });
       console.error("Registration Error:", error);
