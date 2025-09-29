@@ -82,14 +82,14 @@ document.addEventListener("DOMContentLoaded", () => {
           confirmButtonText: "Go to Already Registered",
           confirmButtonColor: "#1d4ed8"
         }).then(() => {
-          window.location.href = "/already-registered"; // 👉 adjust route
+          window.location.href = "/user"; // 👉 adjust route
         });
         return;
       }
 
       // ✅ 2. Register new student in backend
       const backendResponse = await fetch(
-        "https://www.services.fixlabtech.com/api/register",
+        "https://www.services.fixlabtech.com/api/registrations",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
