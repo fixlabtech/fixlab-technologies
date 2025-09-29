@@ -99,7 +99,6 @@ class RegistrationAPIView(APIView):
                 "address": data.get("address"),
                 "occupation": data.get("occupation"),
                 "course": course_obj.id,
-                "mode_of_learning": data.get("mode_of_learning"),
                 "reference_no": reference_no,
                 "message": data.get("message", "")
             })
@@ -144,7 +143,6 @@ class RegistrationAPIView(APIView):
                 address=existing.address,
                 occupation=existing.occupation,
                 course=course_obj,
-                mode_of_learning=data.get("mode_of_learning", existing.mode_of_learning),
                 payment_status="pending",
                 reference_no=reference_no,
                 message=data.get("message", existing.message)
@@ -229,7 +227,6 @@ We are pleased to confirm that your payment for an <b>additional course</b>, <b>
 <b>Course Enrollment Details:</b><br>
 - Student Name: {reg.full_name}<br>
 - New Course: {reg.course.name}<br>
-- Mode of Learning: {reg.mode_of_learning.capitalize()}<br>
 - Reference No: {reg.reference_no}<br>
 - Payment Status: Completed<br>
 - Registration Date: {reg.created_at.strftime("%d %B %Y, %I:%M %p")}<br><br>
@@ -257,7 +254,6 @@ A student has successfully paid for a new course.<br><br>
 <b>Course Details:</b><br>
 - New Course: {reg.course.name}<br>
 - Amount Paid: ₦{reg.course.amount}<br>
-- Mode of Learning: {reg.mode_of_learning.capitalize()}<br>
 - Reference No: {reg.reference_no}<br>
 - Date: {reg.created_at.strftime("%d %B %Y, %I:%M %p")}<br><br>
 
@@ -277,7 +273,6 @@ We are pleased to confirm your <b>new registration</b> for the <b>{reg.course.na
 <b>Registration Details:</b><br>
 - Student Name: {reg.full_name}<br>
 - Course: {reg.course.name}<br>
-- Mode of Learning: {reg.mode_of_learning.capitalize()}<br>
 - Reference No: {reg.reference_no}<br>
 - Payment Status: Completed<br>
 - Registration Date: {reg.created_at.strftime("%d %B %Y, %I:%M %p")}<br><br>
@@ -308,7 +303,6 @@ A new student has successfully registered and paid.<br><br>
 <b>Course Details:</b><br>
 - Course: {reg.course.name}<br>
 - Amount Paid: ₦{reg.course.amount}<br>
-- Mode of Learning: {reg.mode_of_learning.capitalize()}<br>
 - Reference No: {reg.reference_no}<br>
 - Date: {reg.created_at.strftime("%d %B %Y, %I:%M %p")}<br><br>
 
@@ -345,7 +339,6 @@ class CheckUserAPIView(APIView):
             "address": reg.address,
             "occupation": reg.occupation,
             "course": reg.course.name if reg.course else None,
-            "mode_of_learning": reg.mode_of_learning,
             "payment_status": reg.payment_status,
             "reference_no": reg.reference_no
         })
