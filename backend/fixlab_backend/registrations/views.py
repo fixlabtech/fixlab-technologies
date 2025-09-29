@@ -179,7 +179,8 @@ class PaymentVerificationAPIView(APIView):
     """ Verifies Paystack transaction and sends notifications after success """
 
     def get(self, request):
-        reference_no = request.query_params.get("reference")
+        # Accept either 'reference' or 'trxref'
+        reference_no = request.query_params.get("reference") or request.query_params.get("trxref")
         if not reference_no:
             return Response({"success": False, "message": "Reference required."},
                             status=status.HTTP_400_BAD_REQUEST)
