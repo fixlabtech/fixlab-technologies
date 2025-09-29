@@ -37,7 +37,7 @@ class Registration(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="registrations")
     mode_of_learning = models.CharField(max_length=10, choices=MODE_CHOICES)
     payment_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    reference = models.CharField(max_length=100, unique=True)  # Unique payment reference
+    reference_no = models.CharField(max_length=100, unique=True)  # ✅ Paystack reference number
     message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -46,6 +46,5 @@ class Registration(models.Model):
 
     @property
     def amount_due(self):
-        """ Always return the full course fee (since no installments) """
+        """ Always return the full course fee """
         return self.course.amount
-
