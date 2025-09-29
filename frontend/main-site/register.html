@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Already Registered - Fixlab Academy</title>
+    <title>Course Registration - Fixlab Academy</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="assets/css/flaticon.css">
     <link rel="stylesheet" href="assets/css/progressbar_barfiller.css">
     <link rel="stylesheet" href="assets/css/gijgo.css">
-    <link rel="sylesheet" href="assets/css/animate.min.css">
+    <link rel="stylesheet" href="assets/css/animate.min.css">
     <link rel="stylesheet" href="assets/css/animated-headline.css">
     <link rel="stylesheet" href="assets/css/magnific-popup.css">
     <link rel="stylesheet" href="assets/css/fontawesome-all.min.css">
@@ -25,7 +25,6 @@
     <link rel="stylesheet" href="assets/css/nice-select.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/custom2.css">
-
 </head>
 <body>
     <!-- ? Preloader Start -->
@@ -44,13 +43,12 @@
     <!-- Register -->
     <main class="registration-body d-flex align-items-center justify-content-center" style="min-height: 100vh; padding: 20px; background: #fff;">
         <div class="card shadow-lg rounded-4" style="max-width: 600px; width: 100%; padding: 50px 40px; background: #fff;">
-
-<!-- Logo -->
-        <div class="text-center mb-5">
-            <a href="index.html">
-                <img src="assets/img/logo/loder.png" alt="Fixlab Logo" style="max-width: 90px;">
-            </a>
-        </div>
+            <!-- Logo -->
+            <div class="text-center mb-5">
+                <a href="index.html">
+                    <img src="assets/img/logo/loder.png" alt="Fixlab Logo" style="max-width: 90px;">
+                </a>
+            </div>
 
             <h2 class="text-center mb-5 text-primary">Course Registration</h2>
 
@@ -71,6 +69,26 @@
                 </div>
 
                 <div class="mb-3">
+                    <label for="gender" class="form-label">Gender</label>
+                    <select id="gender" name="gender" class="form-select form-control-lg" required>
+                        <option value="">-- Select Gender --</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <input type="text" id="address" name="address" class="form-control form-control-lg" placeholder="Enter your address" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="occupation" class="form-label">Occupation</label>
+                    <input type="text" id="occupation" name="occupation" class="form-control form-control-lg" placeholder="Enter your occupation" required>
+                </div>
+
+                <div class="mb-3">
                     <label for="course" class="form-label">Select Course</label>
                     <select id="course" name="course" class="form-select form-control-lg" required>
                         <option value="">-- Choose a Course --</option>
@@ -81,24 +99,6 @@
                         <option value="IT Essentials">IT Essentials</option>
                     </select>
                 </div>
-                
-                <div class="mb-3">
-                    <label for="mode" class="form-label">Mode of Learning</label>
-                    <select id="mode" name="mode" class="form-select form-control-lg" required>
-                        <option value="">-- Select Mode --</option>
-                        <option value="onsite">Onsite</option>
-                        <option value="virtual">Virtual</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="paymentOption" class="form-label">Payment Option</label>
-                    <select id="paymentOption" name="paymentOption" class="form-select form-control-lg" required>
-                        <option value="">-- Select Payment Option --</option>
-                        <option value="full">Full Payment</option>
-                        <!-- <option value="installment">Installment</option> -->
-                    </select>
-                </div>
 
                 <div class="mb-3">
                     <label for="message" class="form-label">Additional Message (optional)</label>
@@ -107,25 +107,22 @@
 
                 <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">Register</button>
             </form>
+        </div>
     </main>
 
     <!-- Scripts -->
     <script src="assets/js/vendor/jquery-1.12.4.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
     
-
-     <!-- SweetAlert2 -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Jquery Plugins, main Jquery -->	
+    <!-- Jquery Plugins, main Jquery -->    
     <script src="./assets/js/plugins.js"></script>
     <script src="./assets/js/main.js"></script>
     <script src="./assets/js/courseoption.js"></script>
 
     <!-- Custom JS -->
     <script src="assets/js/custom.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 </body>
 </html>
