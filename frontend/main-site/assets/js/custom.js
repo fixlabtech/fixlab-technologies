@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // Collect fields
+    // Collect form fields
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim().toLowerCase();
     const phone = document.getElementById("phone").value.trim();
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // ✅ Step 1: Confirm registration before sending to backend
+    // ✅ Step 1: Confirm registration BEFORE sending to backend
     const confirmResult = await Swal.fire({
       title: "Confirm Registration",
       html: `
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmButtonColor: "#1d4ed8"
     });
 
-    if (!confirmResult.isConfirmed) return; // Stop if user cancels
+    if (!confirmResult.isConfirmed) return;
 
     try {
       // Step 2: Check if user already registered
@@ -98,29 +98,31 @@ document.addEventListener("DOMContentLoaded", () => {
           text: "You already have a registration. Please use the 'Already Registered' option to continue.",
           confirmButtonText: "Go to Already Registered",
           confirmButtonColor: "#1d4ed8"
-        }).then(() => {
-          window.location.href = "/user"; // Adjust route
-        });
+        }).then(() => window.location.href = "/user");
         return;
       }
 
       // Step 3: Send registration to backend
+      const payload = {
+        full_name: name,
+        email,
+        phone,
+        gender,
+        address,
+        occupation,
+        course,
+        message,
+        action: "newRegistration"
+      };
+
+      console.log("Payload to backend:", payload); // For debugging
+
       const backendResponse = await fetch(
         "https://www.services.fixlabtech.com/api/registrations",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            full_name: name,
-            email: email,
-            phone: phone,
-            gender: gender,
-            address: address,
-            occupation: occupation,
-            course: course,
-            message: message,
-            action: "newRegistration"
-          })
+          body: JSON.stringify(payload)
         }
       );
 
@@ -142,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const payLink = backendResult.payment_url;
       if (!payLink) throw new Error("Payment link not provided by backend");
 
-      window.location.href = payLink; // Redirect user
+      window.location.href = payLink; // ✅ Redirect to Paystack
 
     } catch (error) {
       Swal.fire({
