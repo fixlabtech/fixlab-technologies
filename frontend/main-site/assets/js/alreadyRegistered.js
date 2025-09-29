@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
           text: "No user found with this email. You need to register first.",
           confirmButtonText: "Register Now",
           confirmButtonColor: "#1d4ed8",
-        }).then(() => window.location.href = "new-registration.html");
+        }).then(() => window.location.href = "register.html");
         return;
       }
 
