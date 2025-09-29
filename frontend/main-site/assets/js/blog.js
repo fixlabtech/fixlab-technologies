@@ -10,10 +10,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const newsletterEmail = document.getElementById("newsletter-email");
 
     // ✅ Django API base URLs
-    const apiBaseUrl = "http://127.0.0.1:8000/api/blog/blogs/";
-    const categoryUrl = "http://127.0.0.1:8000/api/blog/categories/";
-    const tagUrl = "http://127.0.0.1:8000/api/blog/tags/";
-    const newsletterUrl = "http://127.0.0.1:8000/api/blog/newsletter/subscribe/";
+    const apiBaseUrl = "https://www.services.fixlabtech.com/api/blog/blogs/";
+    const categoryUrl = "https://www.services.fixlabtech.com/api/blog/categories/";
+    const tagUrl = "https://www.services.fixlabtech.com/api/blog/tags/";
+    const newsletterUrl = "https://www.services.fixlabtech.com/api/blog/newsletter/subscribe/";
 
     // ----------------- HELPERS -----------------
     function getResults(data) {
