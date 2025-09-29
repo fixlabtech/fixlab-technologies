@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegistrationAPIView, CheckUserAPIView,HealthCheckView
+from .views import RegistrationAPIView, PaymentVerificationAPIView, CheckUserAPIView, HealthCheckView
 
 
 urlpatterns = [
