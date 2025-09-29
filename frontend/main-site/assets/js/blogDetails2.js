@@ -23,10 +23,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const newsletterEmail = document.getElementById("newsletter-email");
 
     // ----------------- API URLS -----------------
-    const API_BASE = "http://127.0.0.1:8000/api/blog/blogs/";
-    const CATEGORY_URL = "http://127.0.0.1:8000/api/blog/categories/";
-    const TAG_URL = "http://127.0.0.1:8000/api/blog/tags/";
-    const NEWSLETTER_URL = "http://127.0.0.1:8000/api/blog/newsletter/subscribe/";
+    const API_BASE = "https://www.services.fixlabtech.com/api/blog/blogs/";
+    const CATEGORY_URL = "https://www.services.fixlabtech.com/api/blog/categories/";
+    const TAG_URL = "https://www.services.fixlabtech.com/api/blog/tags/";
+    const NEWSLETTER_URL = "https://www.services.fixlabtech.com/api/blog/newsletter/subscribe/";
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
