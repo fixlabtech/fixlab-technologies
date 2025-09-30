@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from ckeditor.fields import RichTextField
+
 
 
 class Category(models.Model):
@@ -50,7 +52,7 @@ class BlogPost(models.Model):
     slug = models.SlugField(max_length=300, unique=True, blank=True)
     author = models.CharField(max_length=150, default="Admin")
     excerpt = models.TextField(blank=True)
-    content = models.TextField()
+    content = RichTextField()    
     image = models.ImageField(upload_to="blog_images/", null=True, blank=True)
     category = models.ForeignKey(Category, related_name="posts", on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
