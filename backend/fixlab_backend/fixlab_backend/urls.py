@@ -5,8 +5,9 @@ from django.conf.urls.static import static
 from contact.views import ContactMessageCreateView  # if needed
 
 urlpatterns = [
-    path('ckeditor/', include('ckeditor_uploader.urls')),
+    
     path('admin/', admin.site.urls),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     path("api/blog/", include("blog.urls")),
     path('api/', include('registrations.urls')),  # Our registrations API
     path('api/contact/', ContactMessageCreateView.as_view(), name='contact-create'),
