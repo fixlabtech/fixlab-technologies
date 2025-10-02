@@ -148,7 +148,7 @@ class NewsletterSubscribeView(APIView):
         subscriber.is_active = True
         subscriber.save()
 
-        subject = "🎉 Welcome to The Fixlab Newsletter!"
+        subject = "Welcome to The Fixlab Newsletter!"
         html_message = build_email_html(
             title="Welcome to Fixlab Newsletter",
             greeting=subscriber.email,
@@ -175,7 +175,7 @@ class NewsletterUnsubscribeView(APIView):
                 subscriber.is_active = False
                 subscriber.save()
 
-                subject = "⚠️ You Have Unsubscribed"
+                subject = "You Have Unsubscribed"
                 html_message = build_email_html(
                     title="You Have Unsubscribed",
                     greeting=subscriber.email,
