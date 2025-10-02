@@ -9,7 +9,7 @@ urlpatterns = [
     path("blogs/<int:post_id>/comments/", views.PostCommentsView.as_view(), name="api-blog-comments"),
     path("categories/", views.CategoryListView.as_view(), name="api-categories"),
     path("tags/", views.TagListView.as_view(), name="api-tags"),
-    path("newsletter/subscribe/", NewsletterSubscribeView.as_view(), name='newsletter-subscribe'),
-    path("unsubscribe/<str:email>/", NewsletterUnsubscribeView.as_view(), name='unsubscribe'),
+    path("newsletter/subscribe/", NewsletterSubscribeView.as_view(), name="newsletter-subscribe"),
+    path("unsubscribe/<str:email>/", NewsletterUnsubscribeView.as_view(), name="unsubscribe"),
 
 ]
