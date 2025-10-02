@@ -40,7 +40,7 @@ def build_email_html(title, greeting, message, footer):
       <p>{footer}</p>
     </div>
     <div style="background-color:#0b5394; color:#fff; text-align:center; padding:10px; font-size:12px;">
-      &copy; {now().year} Fixlab Academy. All rights reserved.
+      &copy; {now().year} Fixlab Team. All rights reserved.
     </div>
   </div>
 </div>
