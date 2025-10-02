@@ -1,39 +1,27 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.mail import send_mail
-from django.conf import settings
 from .models import BlogPost, NewsletterSubscriber
+from .utils import send_email_via_sendgrid
 
 @receiver(post_save, sender=BlogPost)
 def send_blog_notification(sender, instance, created, **kwargs):
     if created:
-        # Get all active subscribers
         subscribers = NewsletterSubscriber.objects.filter(is_active=True)
-
         for subscriber in subscribers:
             subject = f"📢 New Blog Post Published: {instance.title}"
-            
             message = f"""
 Hello {subscriber.email},
 
-We are excited to inform you that a new blog post has just been published on our platform:
+We are excited to inform you that a new blog post has just been published:
 
-Title: {instance.title}
+{instance.title}
 
-You can read the full article here: http://127.0.0.1:8000/blog_details.html?id={instance.id}
+Read here: https://www.fixlabtech.com/blog/{instance.id}
 
-If you no longer wish to receive these updates, you can unsubscribe anytime by clicking the link below:
-http://127.0.0.1:8000/api/newsletter/unsubscribe/{subscriber.email}/
+If you no longer wish to receive updates, unsubscribe here:
+https://www.fixlabtech.com/api/blog/unsubscribe/{subscriber.email}/
 
-We hope you continue to enjoy our content. If you unsubscribe, you can always resubscribe later!
-
-Best regards,
+Best regards,  
 The Fixlab Team
 """
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [subscriber.email],
-                fail_silently=False,
-            )
+            send_email_via_sendgrid(subject, message, subscriber.email)
