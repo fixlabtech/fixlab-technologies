@@ -43,11 +43,11 @@ def send_blog_notification(sender, instance, created, **kwargs):
                 greeting=subscriber.email,
                 message=f"We’ve just published a new blog post on our platform! 🎉<br><br>"
                         f"<strong>{instance.title}</strong><br><br>"
-                        f"<a href='https://www.fixlabtech.com/blog/{instance.id}/' "
+                        f"<a href='https://www.fixlabtech.com/blog_details?id={instance.id}' "
                         f"style='display:inline-block; padding:10px 20px; background:#0b5394; color:#fff; border-radius:5px; text-decoration:none;'>"
                         f"Read Full Article</a>",
                 footer=f"If you no longer wish to receive these updates, you can unsubscribe anytime:<br>"
-                       f"<a href='https://www.fixlabtech.com/api/blog/unsubscribe/{subscriber.email}/'>Unsubscribe</a>"
+                       f"<a href='https://www.services.fixlabtech.com/api/blog/unsubscribe/{subscriber.email}/'>Unsubscribe</a>"
             )
 
             send_email_via_sendgrid(subject, html_message, subscriber.email)
