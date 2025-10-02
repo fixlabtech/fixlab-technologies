@@ -2,7 +2,7 @@ from django.db.models import Count, Q
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail
+from .utils import send_email_via_sendgrid
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
@@ -138,20 +138,14 @@ Thank you for subscribing to our newsletter. 🎊
 You’ll now receive updates whenever a new blog post is published.
 
 👉 If you wish to unsubscribe anytime, click here:
-http://127.0.0.1:8000/api/blog/unsubscribe/{subscriber.email}/
+https://www.fixlabtech.com/api/blog/unsubscribe/{subscriber.email}/
 
 We’re glad to have you onboard! 🚀  
 
 Best regards,  
 The Fixlab Team
 """
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [subscriber.email],
-            fail_silently=False,
-        )
+        send_email_via_sendgrid(subject, message, subscriber.email)
 
         return api_response(
             "subscribed" if created else "resubscribed",
@@ -181,20 +175,17 @@ You have successfully unsubscribed from The Fixlab Newsletter.
 We’re sorry to see you go. 💔
 
 If you ever change your mind, you can resubscribe here:
-http://127.0.0.1:8000/api/blog/newsletter/subscribe/
+https://www.fixlabtech.com/api/blog/subscribe/{subscriber.email}/
 
 Thank you for being part of our community! 🙏  
 
 Best regards,  
 The Fixlab Team
 """
-                send_mail(
-                    subject,
-                    email_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [subscriber.email],
-                    fail_silently=False,
+                send_email_via_sendgrid(
+                    subject, email_message, subscriber.email
                 )
+                
                 message = "You have unsubscribed successfully. A confirmation email has been sent."
 
             # Render HTML page with SweetAlert
