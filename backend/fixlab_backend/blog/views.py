@@ -181,7 +181,7 @@ class NewsletterUnsubscribeView(APIView):
                     greeting=subscriber.email,
                     message="You have successfully unsubscribed from our newsletter. We’re sorry to see you go 💔.",
                     footer=f"If you ever change your mind, resubscribe here:<br>"
-                           f"<a href='https://www.services.fixlabtech.com/api/blog/subscribe/{subscriber.email}/'>Resubscribe</a>"
+                           f"<a href='https://www.fixlabtech.com/blog/'>Resubscribe</a>"
                 )
                 send_email_via_sendgrid(subject, html_message, subscriber.email)
 
