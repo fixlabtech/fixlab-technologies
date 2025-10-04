@@ -50,24 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Step 2: Check pending payment
-      if (userData.payment_status === "pending" && userData.reference_no) {
-        const continuePending = await Swal.fire({
-          title: "Pending Payment Found",
-          text: `You have a pending payment for ${userData.course}.`,
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Continue Payment",
-          cancelButtonText: "Enroll New Course",
-        });
-
-        if (continuePending.isConfirmed) {
-          window.location.href = `https://paystack.shop/pay/continue?reference=${userData.reference_no}`;
-          return;
-        }
-      }
-
-      // Step 3: If registering for new course, validate course
+      // Step 2: Handle new course enrollment only
       if (selectedAction === "newCourse") {
         if (!course) {
           Swal.fire("Error", "Please select a new course to enroll.", "error");
