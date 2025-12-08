@@ -46,13 +46,12 @@ class BlogListSerializer(serializers.ModelSerializer):
         )
 
     def get_image(self, obj):
-        request = self.context.get("request")
-        if obj.image:
-            try:
-                return obj.image.url
-            except Exception:
-                return PLACEHOLDER_IMAGE
-        return PLACEHOLDER_IMAGE
+    request = self.context.get("request")
+    if obj.image:
+        url = obj.image.url
+        return request.build_absolute_uri(url) if request else url
+    return PLACEHOLDER_IMAGE
+
 
     def get_comments_count(self, obj):
         return obj.comments.filter(is_public=True).count()
