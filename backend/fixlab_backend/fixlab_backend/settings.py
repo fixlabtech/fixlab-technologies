@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+import tempfile
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -114,15 +116,28 @@ DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL")
 if not DATABASE_URL:
     raise Exception("DATABASE_PUBLIC_URL environment variable not set!")
 
+# Get the CA cert from environment variable
+tidb_ca_cert_content = os.environ.get("TIDB_CA_CERT")
+
+if tidb_ca_cert_content:
+    # Create a temporary file for the certificate
+    temp_cert = tempfile.NamedTemporaryFile(delete=False)
+    temp_cert.write(tidb_ca_cert_content.encode())
+    temp_cert.flush()  # Make sure it's written
+    tidb_ca_path = temp_cert.name
+else:
+    tidb_ca_path = None  # fallback if not set
+
 DATABASES = {
     "default": dj_database_url.parse(
         DATABASE_URL,
         conn_max_age=600,
     )
 }
+
 DATABASES['default']['OPTIONS'] = {
     "ssl": {
-        "ca": os.path.join(BASE_DIR, "fixlab_backend/certs/tidb-ca.pem")
+        "ca": tidb_ca_path
     }
 }
 
