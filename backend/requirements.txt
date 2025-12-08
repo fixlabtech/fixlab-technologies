@@ -20,5 +20,7 @@ sendgrid==6.11.0
 django-ckeditor>=6.3.0
 cloudinary==1.40.0
 django-cloudinary-storage==0.3.0
+pymysql==1.1.1
+
 
 
