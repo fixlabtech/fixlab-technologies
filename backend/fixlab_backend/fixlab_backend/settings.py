@@ -120,9 +120,10 @@ DATABASES = {
         conn_max_age=600,
     )
 }
-# Proper SSL settings for MySQL/TiDB
 DATABASES['default']['OPTIONS'] = {
-    'ssl': {'ssl-mode': 'REQUIRED'}
+    "ssl": {
+        "ca": os.path.join(BASE_DIR, "fixlab_backend/certs/tidb-ca.pem")
+    }
 }
 
 
