@@ -53,7 +53,7 @@ class BlogPost(models.Model):
     author = models.CharField(max_length=150, default="Admin")
     excerpt = models.TextField(blank=True)
     content = RichTextField()    
-    image = models.ImageField(upload_to="blog_images/", null=True, blank=True)
+    image = models.ImageField(null=True, blank=True)
     category = models.ForeignKey(Category, related_name="posts", on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
     created_at = models.DateTimeField(default=timezone.now)
