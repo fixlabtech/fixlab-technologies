@@ -49,8 +49,7 @@ class BlogListSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if obj.image:
             try:
-                url = obj.image.url  # Cloudinary URL
-                return request.build_absolute_uri(url) if request else url
+                return obj.image.url
             except Exception:
                 return PLACEHOLDER_IMAGE
         return PLACEHOLDER_IMAGE
